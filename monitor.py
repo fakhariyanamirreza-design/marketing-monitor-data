@@ -58,16 +58,43 @@ def priority_for(score, prio):
     return "low", prio["low"]["label_fa"]
 
 
+def _escape_html(s):
+    return str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+
+
+def _is_persian(text):
+    """True if text contains at least one Persian letter."""
+    return bool(re.search(r"[\u0600-\u06FF]", text))
+
+
+def _dedup_titles(items):
+    """Remove duplicate items by near-identical titles."""
+    seen_titles = set()
+    out = []
+    for it in items:
+        key = re.sub(r"[\s\u200c\u200d]+", " ", it["title"][:100].strip().lower())
+        if key in seen_titles:
+            continue
+        seen_titles.add(key)
+        out.append(it)
+    return out
+
+
 # --------------------------- sources ---------------------------
 
-def scan_google_news(cfg, query):
+def scan_googlenews_rss(cfg, query, lang="en", geo="IR"):
     base = cfg["sources"]["google_news"]["base"]
-    url = f"{base}?q={quote_plus(query)}&hl=en"
+    url = f"{base}?q={quote_plus(query)}&hl={lang}&gl={geo}&ceid={geo.lower()}:{lang}"
     try:
         raw = fetch(url)
     except Exception as e:
         print(f"[news] fetch error: {e}")
         return []
+    return parse_rss_items(raw, platform="news", source="google_news")
+
+
+def parse_rss_items(raw, platform, source):
+    """Generic parser for any RSS/Atom feed."""
     items = []
     for m in re.finditer(r"<item>(.*?)</item>", raw, re.S):
         block = m.group(1)
@@ -82,15 +109,25 @@ def scan_google_news(cfg, query):
         p = pub.group(1).strip() if pub else ""
         d = html.unescape(re.sub(r"<[^>]+>", "", desc.group(1))).strip() if desc else ""
         items.append({
-            "id": item_id("news", l, t, p),
-            "platform": "news",
-            "source": "google_news",
+            "id": item_id(source, l, t, p),
+            "platform": platform,
+            "source": source,
             "title": t,
             "url": l,
             "snippet": d[:500],
             "published": p,
         })
     return items
+
+
+def scan_iranian_rss(feed):
+    """Fetch a Persian news agency RSS feed."""
+    try:
+        raw = fetch(feed)
+    except Exception as e:
+        print(f"[ir_rss] fetch error {feed}: {e}")
+        return []
+    return parse_rss_items(raw, platform="news", source=feed)
 
 
 def scan_telegram_channel(username):
@@ -102,12 +139,11 @@ def scan_telegram_channel(username):
         return []
     items = []
     for m in re.finditer(
-        r'<div class="tgme_widget_message[^"]*"[^>]*data-post="([^"]+)"[^>]*>(.*?)</div>\s*<div class="tgme_widget_message_date_time">',
+        r'data-post="([^"]+)".*?<div class="tgme_widget_message_text[^"]*"[^>]*>(.*?)</div>',
         raw, re.S,
     ):
         post_id, body = m.group(1), m.group(2)
-        texts = re.findall(r"<div class=\"tgme_widget_message_text[^\"]*\">(.*?)</div>", body, re.S)
-        text = " ".join(html.unescape(re.sub(r"<[^>]+>", "", tp)).strip() for tp in texts)
+        text = html.unescape(re.sub(r"<br\s*/?>", " ", re.sub(r"<[^>]+>", "", body))).strip()
         if not text:
             continue
         link = f"https://t.me/{post_id}"
@@ -120,34 +156,6 @@ def scan_telegram_channel(username):
             "snippet": text[:600],
             "published": post_id,
         })
-    return items
-
-
-def scan_web(cfg, query):
-    sites = cfg["sources"]["web_search"]["sites"]
-    items = []
-    for site in sites:
-        url = f"https://www.google.com/search?q={quote_plus(f'site:{site} ({query})')}&num=20"
-        try:
-            raw = fetch(url)
-        except Exception as e:
-            print(f"[web] fetch error {site}: {e}")
-            continue
-        for m in re.finditer(
-            r'<a href="/url\?q=([^&]+)&amp;sa=U[^"]*"[^>]*>.*?<h3[^>]*>(.*?)</h3>',
-            raw, re.S,
-        ):
-            link = html.unescape(m.group(1))
-            title = re.sub(r"<[^>]+>", "", m.group(2)).strip()
-            items.append({
-                "id": item_id("web", link, title, ""),
-                "platform": site,
-                "source": "web_search",
-                "title": title[:220],
-                "url": link,
-                "snippet": "",
-                "published": "",
-            })
     return items
 
 
@@ -211,7 +219,10 @@ def score_item(item, rules):
     # secondary categories add a small bonus only
     secondary_bonus = 0.03 * len(secondary)
 
-    score = 100 * (0.6 * str_norm + 0.4 * cat_norm + secondary_bonus)
+    # Persian language boost
+    persian_boost = 8.0 if _is_persian(item.get("title", "")) else 0.0
+
+    score = 100 * (0.6 * str_norm + 0.4 * cat_norm + secondary_bonus) + persian_boost
     brand_matched = best["is_brand"]
     if brand_matched:
         score += sc.get("brand_bonus", 20)
@@ -251,14 +262,31 @@ def category_query(rules, cat):
     return f"({terms})"
 
 
+def category_queries(cat):
+    """Return one query per search term (a quoted phrase, insensitive to OR)."""
+    qs = []
+    for t in cat["search"]:
+        t = t.strip()
+        if not t:
+            continue
+        if " OR " in t:
+            qs.append("(" + t + ")")
+        else:
+            qs.append(f'"{t}"')
+    return qs or [f'"{cat["search"][0]}"']
+
+
 def fetch_all(cfg, rules, seen):
     raw = []
+    gn = cfg["sources"]["google_news"]
+    lang = gn.get("lang", "en")
+    geo = gn.get("geo", "IR")
 
     for cat in rules["categories"]:
-        q = category_query(rules, cat)
-        print(f"[scan] {cat['label']} :: {q}")
-        raw.extend(scan_google_news(cfg, q))
-        time.sleep(0.3)
+        for q in category_queries(cat):
+            print(f"[scan] {cat['label']} :: {q}")
+            raw.extend(scan_googlenews_rss(cfg, q, lang=lang, geo=geo))
+            time.sleep(0.3)
 
     if cfg["sources"]["telegram_channels"]["enabled"]:
         for ch in cfg["sources"]["telegram_channels"]["channels"]:
@@ -266,14 +294,13 @@ def fetch_all(cfg, rules, seen):
             raw.extend(scan_telegram_channel(ch))
             time.sleep(0.3)
 
-    if cfg["sources"]["web_search"]["enabled"]:
-        for cat in rules["categories"]:
-            if not cat.get("web_search"):
-                continue
-            q = category_query(rules, cat)
-            print(f"[scan] web::{cat['label']}")
-            raw.extend(scan_web(cfg, q))
+    if cfg["sources"]["iranian_rss"]["enabled"]:
+        for feed in cfg["sources"]["iranian_rss"]["feeds"]:
+            print(f"[scan] ir_rss::{feed}")
+            raw.extend(scan_iranian_rss(feed))
             time.sleep(0.3)
+
+    raw = _dedup_titles(raw)
 
     results = []
     min_score = rules["scoring"].get("min_score", 0)
@@ -322,19 +349,20 @@ def priority_counts(results):
 
 def build_telegram_report(rules, results, now):
     max_items = rules["scoring"].get("max_items_per_report", 12)
-    lines = [f"Market Intelligence — {now.strftime('%Y-%m-%d %H:%M')}"]
+    lines = [f"<b>Market Intelligence — {now.strftime('%Y-%m-%d %H:%M')}</b>"]
     if not results:
-        lines.append("No new relevant items.")
+        lines.append("خبر مرتبط جدیدی یافت نشد.")
         return "\n".join(lines)
     for it in results[:max_items]:
         tag = f"{it['priority_fa']} [{it['score']}/100]"
+        link = _escape_html(it["url"])
+        title = _escape_html(it["title"])
         lines.append(f"• {tag} | {it['type_fa']}")
-        lines.append(f"  {it['title']}")
-        lines.append(f"  {it['url']}")
+        lines.append(f'  <a href="{link}">{title}</a>')
         if it.get("reasons"):
-            lines.append(f"  دلیل: {'؛ '.join(it['reasons'][:2])}")
+            lines.append(f"  <i>دلیل: {'؛ '.join(_escape_html(r) for r in it['reasons'][:2])}</i>")
     if len(results) > max_items:
-        lines.append(f"(+{len(results)-max_items} more)")
+        lines.append(f"(+{len(results)-max_items} خبر دیگر)")
     return "\n".join(lines)
 
 
@@ -347,6 +375,7 @@ def send_telegram(cfg, text):
     data = json.dumps({
         "chat_id": chat,
         "text": text[:4000],
+        "parse_mode": "HTML",
         "disable_web_page_preview": True,
     }).encode()
     req = Request(url, data=data, headers={"Content-Type": "application/json", "User-Agent": UA}, method="POST")

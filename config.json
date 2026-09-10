@@ -3,15 +3,26 @@
   "sources": {
     "telegram_channels": {
       "enabled": true,
-      "channels": []
+      "channels": [
+        "khabaronline",
+        "eghtesadonline",
+        "boursenews",
+        "tejaratnews"
+      ]
     },
     "google_news": {
       "enabled": true,
-      "base": "https://news.google.com/rss/search"
+      "base": "https://news.google.com/rss/search",
+      "lang": "en",
+      "geo": "IR"
     },
-    "web_search": {
+    "iranian_rss": {
       "enabled": true,
-      "sites": ["x.com", "twitter.com", "instagram.com", "linkedin.com"]
+      "feeds": [
+        "https://irna.ir/rss",
+        "https://www.isna.ir/rss",
+        "https://www.mehrnews.com/rss"
+      ]
     }
   },
   "telegram": {

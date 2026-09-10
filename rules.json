@@ -10,7 +10,8 @@
       "web_search": true,
       "search": [
         "Rasmio",
-        "رسمیو"
+        "رسمیو",
+        "Rasmio OR رسمیو"
       ],
       "keywords": [
         {
@@ -315,7 +316,8 @@
       "search": [
         "AI Company Intelligence",
         "AI Business Intelligence",
-        "هوش مصنوعی کسب و کار"
+        "Iran AI OR هوش مصنوعی ایران",
+        "Iran tech OR فناوری ایران"
       ],
       "keywords": [
         {
@@ -443,8 +445,8 @@
       "search": [
         "Market Intelligence",
         "Competitive Intelligence",
-        "هوش تجاری",
-        "تحلیل بازار"
+        "Iran economy OR اقتصاد ایران OR بورس ایران",
+        "Iran market OR بازار ایران"
       ],
       "keywords": [
         {
@@ -762,7 +764,8 @@
       "is_brand": false,
       "search": [
         "Company Data Platform",
-        "B2B Data Platform"
+        "B2B Data Platform",
+        "Iran company OR شناسه ملی شرکت OR ثبت شرکت"
       ],
       "keywords": [
         {
@@ -1317,11 +1320,21 @@
       "is_brand": false,
       "web_search": true,
       "search": [
-        "روزنامه رسمی",
-        "کدال",
+        "رقم ثبت شرکت",
+        "کدال اطلاعیه",
         "سامانه شناسه ملی",
-        "ثبت شرکت",
-        "Iran company registry"
+        "ثبت شرکت جدید ایران",
+        "ادغام شرکت ایران",
+        "تغییرات شرکت ایران",
+        "روزنامه رسمی ایران",
+        "بانک مرکزی ایران",
+        "سازمان بورس ایران",
+        "استارت آپ ایران",
+        "شرکت دانش بنیان ایران",
+        "فرهنگ اقتصادی ایران",
+        "اقتصاد ایران خبر",
+        "بازار سهام ایران",
+        "شرکت سهامی ایران"
       ],
       "keywords": [
         {
