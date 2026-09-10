@@ -206,10 +206,12 @@ def build_report(cfg, results, now):
         kw_items = [it for it in results if it["query"] in kw["queries"]]
         if not kw_items:
             continue
-        lines.append(f"## {label}")
-        for it in kw_items[:15]:
+        lines.append(f"## {label} ({len(kw_items)} new)")
+        for it in kw_items[:8]:
             platform = it.get("platform", "")
-            lines.append(f"- [{it['title']}]({it['url']}) _{platform}_ — {it['snippet'][:120]}")
+            lines.append(f"- [{it['title']}]({it['url']}) _{platform}_ — {it['snippet'][:90]}")
+        if len(kw_items) > 8:
+            lines.append(f"- … and {len(kw_items)-8} more")
         lines.append("")
     return "\n".join(lines)
 
@@ -265,7 +267,7 @@ def git_push(cfg):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--once", action="store_true", help="run a single cycle and exit")
-    ap.add_argument("--send-report", action="store_true", help="always send to Telegram")
+    ap.add_argument("--send-report", action="store_true", default=None, help="send to Telegram")
     ap.add_argument("--no-report-flag", action="store_true", dest="no_report_flag", help="send if env present")
     args = ap.parse_args()
 
