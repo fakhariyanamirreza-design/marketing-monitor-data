@@ -1,0 +1,43 @@
+﻿{
+    "interval_hours":  3,
+    "keywords":  [
+                     {
+                         "label":  "my_brand",
+                         "queries":  [
+                                         "your brand name",
+                                         "your product"
+                                     ]
+                     }
+                 ],
+    "sources":  {
+                    "telegram_channels":  {
+                                              "enabled":  true,
+                                              "channels":  [
+
+                                                           ]
+                                          },
+                    "google_news":  {
+                                        "enabled":  true,
+                                        "base":  "https://news.google.com/rss/search"
+                                    },
+                    "web_search":  {
+                                       "enabled":  true,
+                                       "sites":  [
+                                                     "x.com",
+                                                     "twitter.com",
+                                                     "instagram.com",
+                                                     "linkedin.com"
+                                                 ]
+                                   }
+                },
+    "telegram":  {
+                     "bot_token":  "PASTE-BOT-TOKEN",
+                     "chat_id":  "PASTE-CHAT-ID",
+                     "send_report":  true
+                 },
+    "git":  {
+                "repo_url":  "https://github.com/fakhariyanamirreza-design/marketing-monitor-data.git",
+                "data_dir":  "data",
+                "commit_message_prefix":  "report"
+            }
+}
