@@ -1,0 +1,1693 @@
+{
+  "categories": [
+    {
+      "id": "rasmio",
+      "label": "Rasmio",
+      "label_fa": "خبر مستقیم رسمیو",
+      "type": "direct_rasmio",
+      "weight": 0.15,
+      "is_brand": true,
+      "web_search": true,
+      "search": [
+        "Rasmio",
+        "رسمیو"
+      ],
+      "keywords": [
+        {
+          "text": "Rasmio",
+          "weight": 1.5
+        },
+        {
+          "text": "Rasmio.com",
+          "weight": 1.2
+        },
+        {
+          "text": "رسمیو",
+          "weight": 1.5
+        },
+        {
+          "text": "هوش رسمیو",
+          "weight": 1.2
+        },
+        {
+          "text": "هوش مصنوعی رسمیو",
+          "weight": 1.2
+        },
+        {
+          "text": "اپلیکیشن رسمیو",
+          "weight": 1.0
+        },
+        {
+          "text": "اشتراک رسمیو",
+          "weight": 1.0
+        },
+        {
+          "text": "اشتراک شرکتی رسمیو",
+          "weight": 1.0
+        },
+        {
+          "text": "اشتراک سازمانی رسمیو",
+          "weight": 1.0
+        },
+        {
+          "text": "پلتفرم رسمیو",
+          "weight": 1.0
+        },
+        {
+          "text": "داده‌های رسمیو",
+          "weight": 1.0
+        },
+        {
+          "text": "اطلاعات شرکت‌های رسمیو",
+          "weight": 1.0
+        },
+        {
+          "text": "تحلیل کسب و کار رسمیو",
+          "weight": 1.0
+        },
+        {
+          "text": "تحلیل شرکت رسمیو",
+          "weight": 1.0
+        },
+        {
+          "text": "استعلام شرکت رسمیو",
+          "weight": 1.0
+        },
+        {
+          "text": "قابلیت جدید رسمیو",
+          "weight": 1.0
+        },
+        {
+          "text": "محصول جدید رسمیو",
+          "weight": 1.0
+        },
+        {
+          "text": "سرویس جدید رسمیو",
+          "weight": 1.0
+        },
+        {
+          "text": "آپدیت رسمیو",
+          "weight": 1.0
+        },
+        {
+          "text": "نسخه جدید رسمیو",
+          "weight": 1.0
+        },
+        {
+          "text": "رسمیو API",
+          "weight": 1.2
+        },
+        {
+          "text": "API رسمیو",
+          "weight": 1.2
+        },
+        {
+          "text": "داده‌های جدید رسمیو",
+          "weight": 1.0
+        },
+        {
+          "text": "منبع داده جدید رسمیو",
+          "weight": 1.0
+        },
+        {
+          "text": "گزارش جدید رسمیو",
+          "weight": 1.0
+        }
+      ]
+    },
+    {
+      "id": "competitors",
+      "label": "Competitors",
+      "label_fa": "خبر رقیب",
+      "type": "competitor",
+      "weight": 0.2,
+      "cap": 74,
+      "is_brand": false,
+      "web_search": true,
+      "search": [
+        "Crunchbase",
+        "PitchBook",
+        "ZoomInfo",
+        "CB Insights",
+        "Dealroom",
+        "Tracxn",
+        "لینکا"
+      ],
+      "keywords": [
+        {
+          "text": "Crunchbase",
+          "weight": 1.3
+        },
+        {
+          "text": "Crunchbase Pro",
+          "weight": 1.1
+        },
+        {
+          "text": "Crunchbase product",
+          "weight": 1.0
+        },
+        {
+          "text": "Crunchbase AI",
+          "weight": 1.2
+        },
+        {
+          "text": "Crunchbase pricing",
+          "weight": 1.0
+        },
+        {
+          "text": "Crunchbase company data",
+          "weight": 1.0
+        },
+        {
+          "text": "PitchBook",
+          "weight": 1.3
+        },
+        {
+          "text": "PitchBook AI",
+          "weight": 1.2
+        },
+        {
+          "text": "PitchBook pricing",
+          "weight": 1.0
+        },
+        {
+          "text": "PitchBook company intelligence",
+          "weight": 1.1
+        },
+        {
+          "text": "CB Insights",
+          "weight": 1.3
+        },
+        {
+          "text": "Dealroom",
+          "weight": 1.3
+        },
+        {
+          "text": "Dealroom AI",
+          "weight": 1.2
+        },
+        {
+          "text": "Dealroom company data",
+          "weight": 1.0
+        },
+        {
+          "text": "Dealroom pricing",
+          "weight": 1.0
+        },
+        {
+          "text": "Tracxn",
+          "weight": 1.3
+        },
+        {
+          "text": "Tracxn AI",
+          "weight": 1.2
+        },
+        {
+          "text": "Tracxn product",
+          "weight": 1.0
+        },
+        {
+          "text": "Tracxn pricing",
+          "weight": 1.0
+        },
+        {
+          "text": "ZoomInfo",
+          "weight": 1.3
+        },
+        {
+          "text": "ZoomInfo AI",
+          "weight": 1.2
+        },
+        {
+          "text": "ZoomInfo product",
+          "weight": 1.0
+        },
+        {
+          "text": "ZoomInfo pricing",
+          "weight": 1.0
+        },
+        {
+          "text": "Apollo",
+          "weight": 1.2
+        },
+        {
+          "text": "Clearbit",
+          "weight": 1.2
+        },
+        {
+          "text": "LinkedIn Sales Navigator",
+          "weight": 1.2
+        },
+        {
+          "text": "Dun & Bradstreet",
+          "weight": 1.2
+        },
+        {
+          "text": "Owler",
+          "weight": 1.1
+        },
+        {
+          "text": "Similarweb",
+          "weight": 1.2
+        },
+        {
+          "text": "PrivCo",
+          "weight": 1.1
+        },
+        {
+          "text": "GlobalData",
+          "weight": 1.1
+        },
+        {
+          "text": "Companies House",
+          "weight": 1.2
+        },
+        {
+          "text": "Orbis",
+          "weight": 1.1
+        },
+        {
+          "text": "Bureau van Dijk",
+          "weight": 1.2
+        },
+        {
+          "text": "لینکا",
+          "weight": 1.3
+        },
+        {
+          "text": "Linka",
+          "weight": 1.2
+        },
+        {
+          "text": "linka.ir",
+          "weight": 1.1
+        },
+        {
+          "text": "پلتفرم لینکا",
+          "weight": 1.1
+        },
+        {
+          "text": "اطلاعات شرکت‌ها لینکا",
+          "weight": 1.0
+        },
+        {
+          "text": "استعلام شرکت لینکا",
+          "weight": 1.0
+        },
+        {
+          "text": "لینکا شرکت",
+          "weight": 1.0
+        },
+        {
+          "text": "لینکا کسب و کار",
+          "weight": 1.0
+        }
+      ]
+    },
+    {
+      "id": "product_ai",
+      "label": "Product & AI",
+      "label_fa": "ترند محصول و هوش مصنوعی",
+      "type": "market_trend",
+      "weight": 0.15,
+      "cap": 72,
+      "is_brand": false,
+      "search": [
+        "AI Company Intelligence",
+        "AI Business Intelligence",
+        "هوش مصنوعی کسب و کار"
+      ],
+      "keywords": [
+        {
+          "text": "AI Company Intelligence",
+          "weight": 1.2
+        },
+        {
+          "text": "AI Business Intelligence",
+          "weight": 1.2
+        },
+        {
+          "text": "AI Business Research",
+          "weight": 1.1
+        },
+        {
+          "text": "AI Company Research",
+          "weight": 1.1
+        },
+        {
+          "text": "AI Company Search",
+          "weight": 1.1
+        },
+        {
+          "text": "AI Market Intelligence",
+          "weight": 1.1
+        },
+        {
+          "text": "AI Competitive Intelligence",
+          "weight": 1.1
+        },
+        {
+          "text": "AI Sales Intelligence",
+          "weight": 1.1
+        },
+        {
+          "text": "AI B2B Intelligence",
+          "weight": 1.1
+        },
+        {
+          "text": "AI Business Data",
+          "weight": 1.0
+        },
+        {
+          "text": "AI Company Database",
+          "weight": 1.1
+        },
+        {
+          "text": "AI Research Assistant",
+          "weight": 1.0
+        },
+        {
+          "text": "AI Business Research Assistant",
+          "weight": 1.0
+        },
+        {
+          "text": "AI Decision Intelligence",
+          "weight": 1.0
+        },
+        {
+          "text": "AI for Business Research",
+          "weight": 1.0
+        },
+        {
+          "text": "AI for Market Research",
+          "weight": 1.0
+        },
+        {
+          "text": "هوش مصنوعی کسب و کار",
+          "weight": 1.2
+        },
+        {
+          "text": "هوش مصنوعی شرکت‌ها",
+          "weight": 1.1
+        },
+        {
+          "text": "هوش مصنوعی تحلیل شرکت",
+          "weight": 1.1
+        },
+        {
+          "text": "هوش مصنوعی تحلیل بازار",
+          "weight": 1.1
+        },
+        {
+          "text": "هوش مصنوعی تحقیقات بازار",
+          "weight": 1.1
+        },
+        {
+          "text": "هوش مصنوعی تحلیل رقبا",
+          "weight": 1.1
+        },
+        {
+          "text": "هوش مصنوعی اطلاعات شرکت‌ها",
+          "weight": 1.1
+        },
+        {
+          "text": "دستیار هوشمند کسب و کار",
+          "weight": 1.0
+        },
+        {
+          "text": "دستیار تحقیق بازار",
+          "weight": 1.0
+        },
+        {
+          "text": "دستیار تحلیل شرکت",
+          "weight": 1.0
+        },
+        {
+          "text": "تحلیل شرکت با هوش مصنوعی",
+          "weight": 1.0
+        },
+        {
+          "text": "تحلیل بازار با هوش مصنوعی",
+          "weight": 1.0
+        }
+      ]
+    },
+    {
+      "id": "market_intelligence",
+      "label": "Market Intelligence",
+      "label_fa": "ترند مهم بازار",
+      "type": "market_trend",
+      "weight": 0.15,
+      "cap": 72,
+      "is_brand": false,
+      "search": [
+        "Market Intelligence",
+        "Competitive Intelligence",
+        "هوش تجاری",
+        "تحلیل بازار"
+      ],
+      "keywords": [
+        {
+          "text": "Company Intelligence",
+          "weight": 1.2
+        },
+        {
+          "text": "Business Intelligence",
+          "weight": 1.1
+        },
+        {
+          "text": "Business Information",
+          "weight": 1.0
+        },
+        {
+          "text": "Business Data",
+          "weight": 0.4
+        },
+        {
+          "text": "Company Intelligence Platform",
+          "weight": 1.2
+        },
+        {
+          "text": "Business Intelligence Platform",
+          "weight": 1.2
+        },
+        {
+          "text": "Business Information Platform",
+          "weight": 1.1
+        },
+        {
+          "text": "Corporate Intelligence",
+          "weight": 1.1
+        },
+        {
+          "text": "Market Intelligence",
+          "weight": 1.2
+        },
+        {
+          "text": "Competitive Intelligence",
+          "weight": 1.2
+        },
+        {
+          "text": "Company Research",
+          "weight": 1.1
+        },
+        {
+          "text": "Business Research",
+          "weight": 1.0
+        },
+        {
+          "text": "Company Discovery",
+          "weight": 1.1
+        },
+        {
+          "text": "Business Discovery",
+          "weight": 1.0
+        },
+        {
+          "text": "Company Search",
+          "weight": 1.1
+        },
+        {
+          "text": "Company Verification",
+          "weight": 1.1
+        },
+        {
+          "text": "Corporate Data",
+          "weight": 0.4
+        },
+        {
+          "text": "Company Data Platform",
+          "weight": 1.1
+        },
+        {
+          "text": "B2B Intelligence",
+          "weight": 1.1
+        },
+        {
+          "text": "B2B Database",
+          "weight": 1.0
+        },
+        {
+          "text": "B2B Data Platform",
+          "weight": 1.0
+        },
+        {
+          "text": "هوش تجاری",
+          "weight": 1.1
+        },
+        {
+          "text": "هوش کسب و کار",
+          "weight": 1.1
+        },
+        {
+          "text": "هوش کسب‌وکار",
+          "weight": 1.1
+        },
+        {
+          "text": "اطلاعات کسب و کار",
+          "weight": 1.0
+        },
+        {
+          "text": "اطلاعات شرکت‌ها",
+          "weight": 1.0
+        },
+        {
+          "text": "داده شرکت‌ها",
+          "weight": 1.0
+        },
+        {
+          "text": "پایگاه اطلاعات شرکت‌ها",
+          "weight": 1.0
+        },
+        {
+          "text": "بانک اطلاعات شرکت‌ها",
+          "weight": 1.0
+        },
+        {
+          "text": "تحلیل شرکت‌ها",
+          "weight": 1.0
+        },
+        {
+          "text": "تحلیل کسب و کار",
+          "weight": 1.0
+        },
+        {
+          "text": "تحلیل کسب‌وکار",
+          "weight": 1.0
+        },
+        {
+          "text": "تحلیل رقبا",
+          "weight": 1.1
+        },
+        {
+          "text": "هوش رقابتی",
+          "weight": 1.1
+        },
+        {
+          "text": "اطلاعات تجاری",
+          "weight": 1.0
+        },
+        {
+          "text": "داده‌های تجاری",
+          "weight": 1.0
+        },
+        {
+          "text": "داده‌های کسب‌وکار",
+          "weight": 1.0
+        },
+        {
+          "text": "تحقیقات بازار",
+          "weight": 1.0
+        },
+        {
+          "text": "اطلاعات بازار",
+          "weight": 1.0
+        },
+        {
+          "text": "شناخت بازار",
+          "weight": 1.0
+        },
+        {
+          "text": "شناخت شرکت‌ها",
+          "weight": 1.0
+        },
+        {
+          "text": "Market Research",
+          "weight": 0.5
+        },
+        {
+          "text": "Market Analysis",
+          "weight": 0.5
+        },
+        {
+          "text": "Market Mapping",
+          "weight": 1.0
+        },
+        {
+          "text": "Market Landscape",
+          "weight": 1.0
+        },
+        {
+          "text": "Competitive Analysis",
+          "weight": 1.1
+        },
+        {
+          "text": "Competitor Analysis",
+          "weight": 1.0
+        },
+        {
+          "text": "Competitor Monitoring",
+          "weight": 1.0
+        },
+        {
+          "text": "Competitor Tracking",
+          "weight": 1.0
+        },
+        {
+          "text": "Industry Intelligence",
+          "weight": 1.0
+        },
+        {
+          "text": "Industry Analysis",
+          "weight": 1.0
+        },
+        {
+          "text": "Industry Research",
+          "weight": 1.0
+        },
+        {
+          "text": "Industry Database",
+          "weight": 1.0
+        },
+        {
+          "text": "Industry Mapping",
+          "weight": 1.0
+        },
+        {
+          "text": "Market Trends",
+          "weight": 1.0
+        },
+        {
+          "text": "Market Data",
+          "weight": 0.4
+        },
+        {
+          "text": "Market Size",
+          "weight": 1.0
+        },
+        {
+          "text": "Market Share",
+          "weight": 1.0
+        },
+        {
+          "text": "تحلیل بازار",
+          "weight": 1.1
+        },
+        {
+          "text": "تحقیقات بازار",
+          "weight": 1.0
+        },
+        {
+          "text": "هوش بازار",
+          "weight": 1.0
+        },
+        {
+          "text": "هوش رقابتی",
+          "weight": 1.1
+        },
+        {
+          "text": "تحلیل رقبا",
+          "weight": 1.1
+        },
+        {
+          "text": "رصد رقبا",
+          "weight": 1.1
+        },
+        {
+          "text": "پایش رقبا",
+          "weight": 1.1
+        },
+        {
+          "text": "بررسی رقبا",
+          "weight": 1.0
+        },
+        {
+          "text": "رقبای شرکت",
+          "weight": 1.0
+        },
+        {
+          "text": "رقبای جدید",
+          "weight": 1.0
+        },
+        {
+          "text": "تحولات بازار",
+          "weight": 1.0
+        },
+        {
+          "text": "روند بازار",
+          "weight": 1.0
+        },
+        {
+          "text": "اندازه بازار",
+          "weight": 1.0
+        },
+        {
+          "text": "سهم بازار",
+          "weight": 1.0
+        },
+        {
+          "text": "نقشه بازار",
+          "weight": 1.0
+        },
+        {
+          "text": "نقشه صنعت",
+          "weight": 1.0
+        },
+        {
+          "text": "تحلیل صنعت",
+          "weight": 1.0
+        },
+        {
+          "text": "رصد صنعت",
+          "weight": 1.0
+        }
+      ]
+    },
+    {
+      "id": "business_data",
+      "label": "Business Data",
+      "label_fa": "داده و اطلاعات کسب و کار",
+      "type": "general",
+      "weight": 0.15,
+      "is_brand": false,
+      "search": [
+        "Company Data Platform",
+        "B2B Data Platform"
+      ],
+      "keywords": [
+        {
+          "text": "Company Data",
+          "weight": 0.4
+        },
+        {
+          "text": "Company Database",
+          "weight": 1.0
+        },
+        {
+          "text": "Business Data Platform",
+          "weight": 1.1
+        },
+        {
+          "text": "Corporate Data",
+          "weight": 0.4
+        },
+        {
+          "text": "B2B Data",
+          "weight": 0.4
+        },
+        {
+          "text": "B2B Intelligence",
+          "weight": 1.0
+        },
+        {
+          "text": "B2B Database",
+          "weight": 1.0
+        },
+        {
+          "text": "Business Network",
+          "weight": 1.0
+        },
+        {
+          "text": "Corporate Network",
+          "weight": 1.0
+        },
+        {
+          "text": "Financial Data",
+          "weight": 0.4
+        },
+        {
+          "text": "Financial Intelligence",
+          "weight": 0.4
+        },
+        {
+          "text": "Financial Statements",
+          "weight": 0.5
+        },
+        {
+          "text": "Company Financials",
+          "weight": 1.1
+        },
+        {
+          "text": "Corporate Financials",
+          "weight": 1.1
+        },
+        {
+          "text": "Financial Analysis",
+          "weight": 0.5
+        },
+        {
+          "text": "Revenue",
+          "weight": 0.5
+        },
+        {
+          "text": "Profit",
+          "weight": 0.5
+        },
+        {
+          "text": "EBITDA",
+          "weight": 0.5
+        },
+        {
+          "text": "Balance Sheet",
+          "weight": 0.5
+        },
+        {
+          "text": "Income Statement",
+          "weight": 0.5
+        },
+        {
+          "text": "Cash Flow",
+          "weight": 0.5
+        },
+        {
+          "text": "Annual Report",
+          "weight": 0.5
+        },
+        {
+          "text": "Quarterly Report",
+          "weight": 0.5
+        },
+        {
+          "text": "Financial Disclosure",
+          "weight": 0.5
+        },
+        {
+          "text": "Board of Directors",
+          "weight": 1.1
+        },
+        {
+          "text": "CEO Database",
+          "weight": 1.1
+        },
+        {
+          "text": "Executive Database",
+          "weight": 1.0
+        },
+        {
+          "text": "Executive Intelligence",
+          "weight": 1.1
+        },
+        {
+          "text": "Management Intelligence",
+          "weight": 1.0
+        },
+        {
+          "text": "Director Database",
+          "weight": 1.0
+        },
+        {
+          "text": "Corporate Relationships",
+          "weight": 1.0
+        },
+        {
+          "text": "Business Relationships",
+          "weight": 1.0
+        },
+        {
+          "text": "Corporate Connections",
+          "weight": 1.0
+        },
+        {
+          "text": "Decision Makers",
+          "weight": 1.1
+        },
+        {
+          "text": "Key Decision Makers",
+          "weight": 1.1
+        },
+        {
+          "text": "Company Ownership",
+          "weight": 1.0
+        },
+        {
+          "text": "Corporate Structure",
+          "weight": 1.0
+        },
+        {
+          "text": "Management Changes",
+          "weight": 1.0
+        },
+        {
+          "text": "Executive Changes",
+          "weight": 1.0
+        },
+        {
+          "text": "Board Changes",
+          "weight": 1.0
+        },
+        {
+          "text": "B2B Sales Intelligence",
+          "weight": 1.0
+        },
+        {
+          "text": "Sales Intelligence",
+          "weight": 1.0
+        },
+        {
+          "text": "Sales Prospecting",
+          "weight": 1.0
+        },
+        {
+          "text": "Lead Generation",
+          "weight": 0.5
+        },
+        {
+          "text": "B2B Lead Generation",
+          "weight": 1.0
+        },
+        {
+          "text": "Lead Intelligence",
+          "weight": 1.0
+        },
+        {
+          "text": "Account Intelligence",
+          "weight": 1.0
+        },
+        {
+          "text": "Account Based Marketing",
+          "weight": 1.0
+        },
+        {
+          "text": "ABM",
+          "weight": 0.5
+        },
+        {
+          "text": "B2B Prospecting",
+          "weight": 1.0
+        },
+        {
+          "text": "Prospect Database",
+          "weight": 1.0
+        },
+        {
+          "text": "Customer Intelligence",
+          "weight": 1.0
+        },
+        {
+          "text": "Customer Discovery",
+          "weight": 1.0
+        },
+        {
+          "text": "Target Account",
+          "weight": 1.0
+        },
+        {
+          "text": "Ideal Customer Profile",
+          "weight": 1.0
+        },
+        {
+          "text": "ICP",
+          "weight": 0.5
+        },
+        {
+          "text": "Decision Maker Database",
+          "weight": 1.0
+        },
+        {
+          "text": "B2B Contact Database",
+          "weight": 1.0
+        },
+        {
+          "text": "Due Diligence",
+          "weight": 1.1
+        },
+        {
+          "text": "Business Due Diligence",
+          "weight": 1.1
+        },
+        {
+          "text": "Company Due Diligence",
+          "weight": 1.1
+        },
+        {
+          "text": "Corporate Due Diligence",
+          "weight": 1.1
+        },
+        {
+          "text": "Third Party Risk",
+          "weight": 1.0
+        },
+        {
+          "text": "Third Party Risk Management",
+          "weight": 1.0
+        },
+        {
+          "text": "Vendor Risk",
+          "weight": 1.0
+        },
+        {
+          "text": "Supplier Risk",
+          "weight": 1.0
+        },
+        {
+          "text": "Business Risk",
+          "weight": 1.0
+        },
+        {
+          "text": "Corporate Risk",
+          "weight": 1.0
+        },
+        {
+          "text": "Counterparty Risk",
+          "weight": 1.0
+        },
+        {
+          "text": "KYC",
+          "weight": 0.5
+        },
+        {
+          "text": "KYB",
+          "weight": 0.5
+        },
+        {
+          "text": "Know Your Business",
+          "weight": 1.0
+        },
+        {
+          "text": "Business Verification",
+          "weight": 1.0
+        },
+        {
+          "text": "Company Verification",
+          "weight": 1.0
+        },
+        {
+          "text": "Corporate Verification",
+          "weight": 1.0
+        },
+        {
+          "text": "مدیرعامل",
+          "weight": 0.9
+        },
+        {
+          "text": "مدیرعامل شرکت",
+          "weight": 1.0
+        },
+        {
+          "text": "اعضای هیئت مدیره",
+          "weight": 1.0
+        },
+        {
+          "text": "هیئت مدیره شرکت",
+          "weight": 1.0
+        },
+        {
+          "text": "مدیران شرکت",
+          "weight": 1.0
+        },
+        {
+          "text": "مدیران عامل شرکت‌ها",
+          "weight": 1.0
+        },
+        {
+          "text": "سوابق مدیرعامل",
+          "weight": 1.0
+        },
+        {
+          "text": "سوابق مدیریتی",
+          "weight": 1.0
+        },
+        {
+          "text": "ارتباطات شرکتی",
+          "weight": 1.0
+        },
+        {
+          "text": "شبکه ارتباطی شرکت‌ها",
+          "weight": 1.0
+        },
+        {
+          "text": "شبکه شرکت‌ها",
+          "weight": 1.0
+        },
+        {
+          "text": "ارتباط مدیران",
+          "weight": 1.0
+        },
+        {
+          "text": "ارتباط شرکت‌ها",
+          "weight": 1.0
+        },
+        {
+          "text": "شبکه مدیران",
+          "weight": 1.0
+        },
+        {
+          "text": "تصمیم گیرندگان",
+          "weight": 1.0
+        },
+        {
+          "text": "تصمیم‌گیرندگان",
+          "weight": 1.0
+        },
+        {
+          "text": "مدیران ارشد",
+          "weight": 1.0
+        },
+        {
+          "text": "تغییر مدیرعامل",
+          "weight": 1.0
+        },
+        {
+          "text": "تغییر هیئت مدیره",
+          "weight": 1.0
+        },
+        {
+          "text": "تغییر اعضای هیئت مدیره",
+          "weight": 1.0
+        },
+        {
+          "text": "صورت‌های مالی",
+          "weight": 1.1
+        },
+        {
+          "text": "اطلاعات مالی شرکت",
+          "weight": 1.0
+        },
+        {
+          "text": "تحلیل مالی شرکت",
+          "weight": 1.0
+        },
+        {
+          "text": "درآمد شرکت",
+          "weight": 1.0
+        },
+        {
+          "text": "سود شرکت",
+          "weight": 1.0
+        },
+        {
+          "text": "زیان شرکت",
+          "weight": 1.0
+        },
+        {
+          "text": "دارایی شرکت",
+          "weight": 1.0
+        },
+        {
+          "text": "بدهی شرکت",
+          "weight": 1.0
+        },
+        {
+          "text": "جریان نقدی",
+          "weight": 1.0
+        },
+        {
+          "text": "گزارش مالی",
+          "weight": 1.0
+        },
+        {
+          "text": "گزارش سالانه",
+          "weight": 1.0
+        },
+        {
+          "text": "گزارش فصلی",
+          "weight": 1.0
+        },
+        {
+          "text": "افشای اطلاعات",
+          "weight": 1.0
+        },
+        {
+          "text": "گزارش عملکرد شرکت",
+          "weight": 1.0
+        },
+        {
+          "text": "سرنخ فروش",
+          "weight": 0.9
+        },
+        {
+          "text": "تولید سرنخ",
+          "weight": 0.9
+        },
+        {
+          "text": "بانک اطلاعات مشتریان",
+          "weight": 1.0
+        },
+        {
+          "text": "بانک اطلاعات مدیران",
+          "weight": 1.0
+        },
+        {
+          "text": "پیدا کردن مشتری سازمانی",
+          "weight": 1.0
+        },
+        {
+          "text": "پیدا کردن مشتری B2B",
+          "weight": 1.0
+        },
+        {
+          "text": "شناسایی مشتری",
+          "weight": 1.0
+        },
+        {
+          "text": "شناسایی مشتریان بالقوه",
+          "weight": 1.0
+        },
+        {
+          "text": "شناسایی مدیران",
+          "weight": 1.0
+        },
+        {
+          "text": "شناسایی تصمیم گیرندگان",
+          "weight": 1.0
+        },
+        {
+          "text": "بازاریابی مبتنی بر حساب",
+          "weight": 1.0
+        },
+        {
+          "text": "فروش مبتنی بر داده",
+          "weight": 1.0
+        },
+        {
+          "text": "فروش داده محور",
+          "weight": 1.0
+        },
+        {
+          "text": "بررسی شرکت",
+          "weight": 1.1
+        },
+        {
+          "text": "بررسی طرف قرارداد",
+          "weight": 1.1
+        },
+        {
+          "text": "بررسی شریک تجاری",
+          "weight": 1.1
+        },
+        {
+          "text": "بررسی تأمین کننده",
+          "weight": 1.0
+        },
+        {
+          "text": "بررسی تأمین‌کننده",
+          "weight": 1.0
+        },
+        {
+          "text": "ریسک شرکت",
+          "weight": 1.0
+        },
+        {
+          "text": "ریسک کسب و کار",
+          "weight": 1.0
+        },
+        {
+          "text": "ریسک کسب‌وکار",
+          "weight": 1.0
+        },
+        {
+          "text": "ریسک طرف قرارداد",
+          "weight": 1.0
+        },
+        {
+          "text": "ریسک تأمین‌کننده",
+          "weight": 1.0
+        },
+        {
+          "text": "بررسی پیش از قرارداد",
+          "weight": 1.0
+        },
+        {
+          "text": "بررسی پیش از همکاری",
+          "weight": 1.0
+        },
+        {
+          "text": "بررسی سوابق شرکت",
+          "weight": 1.0
+        }
+      ],
+      "cap": 64
+    },
+    {
+      "id": "iran_ecosystem",
+      "label": "Iran Business Ecosystem",
+      "label_fa": "اکوسیستم کسب و کار ایران",
+      "type": "general",
+      "weight": 0.2,
+      "is_brand": false,
+      "web_search": true,
+      "search": [
+        "روزنامه رسمی",
+        "کدال",
+        "سامانه شناسه ملی",
+        "ثبت شرکت",
+        "Iran company registry"
+      ],
+      "keywords": [
+        {
+          "text": "شناسه ملی اشخاص حقوقی",
+          "weight": 1.2
+        },
+        {
+          "text": "سامانه شناسه ملی",
+          "weight": 1.2
+        },
+        {
+          "text": "ilenc",
+          "weight": 0.8
+        },
+        {
+          "text": "ILENC",
+          "weight": 0.8
+        },
+        {
+          "text": "شناسه ملی شرکت",
+          "weight": 1.2
+        },
+        {
+          "text": "استعلام شناسه ملی",
+          "weight": 1.2
+        },
+        {
+          "text": "اشخاص حقوقی",
+          "weight": 1.0
+        },
+        {
+          "text": "شناسه ملی",
+          "weight": 1.1
+        },
+        {
+          "text": "شماره ثبت",
+          "weight": 1.0
+        },
+        {
+          "text": "روزنامه رسمی",
+          "weight": 1.3
+        },
+        {
+          "text": "روزنامه رسمی جمهوری اسلامی ایران",
+          "weight": 1.2
+        },
+        {
+          "text": "rrk",
+          "weight": 0.8
+        },
+        {
+          "text": "rrk.ir",
+          "weight": 0.8
+        },
+        {
+          "text": "روزنامه رسمی شرکت",
+          "weight": 1.1
+        },
+        {
+          "text": "آگهی تأسیس شرکت",
+          "weight": 1.2
+        },
+        {
+          "text": "آگهی تغییرات شرکت",
+          "weight": 1.2
+        },
+        {
+          "text": "آگهی قانونی شرکت",
+          "weight": 1.1
+        },
+        {
+          "text": "آخرین تغییرات شرکت",
+          "weight": 1.0
+        },
+        {
+          "text": "کدال",
+          "weight": 1.3
+        },
+        {
+          "text": "Codal",
+          "weight": 1.2
+        },
+        {
+          "text": "codal.ir",
+          "weight": 1.1
+        },
+        {
+          "text": "صورت‌های مالی شرکت",
+          "weight": 1.0
+        },
+        {
+          "text": "صورت مالی",
+          "weight": 0.9
+        },
+        {
+          "text": "گزارش مالی شرکت",
+          "weight": 1.0
+        },
+        {
+          "text": "گزارش ماهانه شرکت",
+          "weight": 1.0
+        },
+        {
+          "text": "گزارش سالانه شرکت",
+          "weight": 1.0
+        },
+        {
+          "text": "اطلاعیه کدال",
+          "weight": 1.2
+        },
+        {
+          "text": "ثبت شرکت",
+          "weight": 1.2
+        },
+        {
+          "text": "ثبت شرکت‌ها",
+          "weight": 1.2
+        },
+        {
+          "text": "تغییرات شرکت",
+          "weight": 1.2
+        },
+        {
+          "text": "تأسیس شرکت",
+          "weight": 1.2
+        },
+        {
+          "text": "انحلال شرکت",
+          "weight": 1.2
+        },
+        {
+          "text": "ادغام شرکت",
+          "weight": 1.2
+        },
+        {
+          "text": "تغییر آدرس شرکت",
+          "weight": 1.0
+        },
+        {
+          "text": "تغییر موضوع فعالیت",
+          "weight": 1.0
+        },
+        {
+          "text": "تغییر سرمایه شرکت",
+          "weight": 1.0
+        },
+        {
+          "text": "افزایش سرمایه",
+          "weight": 1.1
+        },
+        {
+          "text": "کاهش سرمایه",
+          "weight": 1.1
+        },
+        {
+          "text": "تغییر صاحبان امضا",
+          "weight": 1.0
+        },
+        {
+          "text": "وضعیت شرکت",
+          "weight": 1.0
+        },
+        {
+          "text": "شرکت فعال",
+          "weight": 0.9
+        },
+        {
+          "text": "شرکت منحل شده",
+          "weight": 1.0
+        },
+        {
+          "text": "شرکت در حال انحلال",
+          "weight": 1.0
+        },
+        {
+          "text": "موضوع فعالیت شرکت",
+          "weight": 1.0
+        },
+        {
+          "text": "کردل",
+          "weight": 0.7
+        },
+        {
+          "text": "مرکز آمار",
+          "weight": 1.0
+        },
+        {
+          "text": "وزارت صمت",
+          "weight": 1.1
+        },
+        {
+          "text": "وزارت اقتصاد",
+          "weight": 1.1
+        },
+        {
+          "text": "بانک مرکزی",
+          "weight": 0.9
+        },
+        {
+          "text": "سازمان امور مالیاتی",
+          "weight": 1.1
+        },
+        {
+          "text": "سازمان تأمین اجتماعی",
+          "weight": 1.1
+        },
+        {
+          "text": "اتاق بازرگانی",
+          "weight": 1.1
+        },
+        {
+          "text": "سامانه جامع تجارت",
+          "weight": 1.1
+        },
+        {
+          "text": "مجوزها",
+          "weight": 1.0
+        },
+        {
+          "text": "درگاه ملی مجوزها",
+          "weight": 1.2
+        },
+        {
+          "text": "مجوز کسب و کار",
+          "weight": 1.0
+        },
+        {
+          "text": "مجوز شرکت",
+          "weight": 1.0
+        },
+        {
+          "text": "Iran business registry",
+          "weight": 1.2
+        },
+        {
+          "text": "Iran company registry",
+          "weight": 1.2
+        },
+        {
+          "text": "Iran corporate registry",
+          "weight": 1.2
+        },
+        {
+          "text": "Iran company data",
+          "weight": 1.1
+        },
+        {
+          "text": "Iran business data",
+          "weight": 1.1
+        },
+        {
+          "text": "Iran corporate data",
+          "weight": 1.1
+        },
+        {
+          "text": "Iran business intelligence",
+          "weight": 1.1
+        },
+        {
+          "text": "Iran company database",
+          "weight": 1.0
+        },
+        {
+          "text": "Iran market intelligence",
+          "weight": 1.0
+        },
+        {
+          "text": "Iran B2B data",
+          "weight": 1.0
+        },
+        {
+          "text": "Iran business directory",
+          "weight": 1.0
+        },
+        {
+          "text": "ثبت شرکت جدید",
+          "weight": 1.2
+        },
+        {
+          "text": "تأسیس شرکت جدید",
+          "weight": 1.2
+        },
+        {
+          "text": "ادغام شرکت",
+          "weight": 1.1
+        },
+        {
+          "text": "خرید شرکت",
+          "weight": 1.1
+        },
+        {
+          "text": "تملک شرکت",
+          "weight": 1.1
+        },
+        {
+          "text": "سرمایه‌گذاری شرکت",
+          "weight": 1.0
+        },
+        {
+          "text": "سرمایه‌گذاری در شرکت",
+          "weight": 1.0
+        },
+        {
+          "text": "جذب سرمایه",
+          "weight": 1.0
+        },
+        {
+          "text": "افزایش سرمایه",
+          "weight": 1.1
+        },
+        {
+          "text": "ورود سرمایه‌گذار",
+          "weight": 1.0
+        },
+        {
+          "text": "خروج سرمایه‌گذار",
+          "weight": 1.0
+        },
+        {
+          "text": "ورشکستگی شرکت",
+          "weight": 1.2
+        },
+        {
+          "text": "انحلال شرکت",
+          "weight": 1.1
+        },
+        {
+          "text": "تغییر مالکیت",
+          "weight": 1.1
+        },
+        {
+          "text": "تغییر سهامداری",
+          "weight": 1.0
+        },
+        {
+          "text": "تغییر ساختار شرکت",
+          "weight": 1.0
+        }
+      ]
+    }
+  ],
+  "scoring": {
+    "relevance_divisor": 2.0,
+    "title_multiplier": 2.0,
+    "coverage_divisor": 0.3,
+    "brand_bonus": 20,
+    "brand_floor": 80,
+    "min_score": 40,
+    "max_items_per_report": 12
+  },
+  "priorities": {
+    "critical": {
+      "min": 75,
+      "label_fa": "بحرانی"
+    },
+    "high": {
+      "min": 55,
+      "label_fa": "بالا"
+    },
+    "medium": {
+      "min": 30,
+      "label_fa": "متوسط"
+    },
+    "low": {
+      "min": 0,
+      "label_fa": "کم‌اهمیت"
+    }
+  }
+}

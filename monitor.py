@@ -1,42 +1,40 @@
 #!/usr/bin/env python3
-"""Marketing monitor agent: scans free sources for keywords and reports results."""
+"""Marketing Intelligence monitor: scores news by relevance to Rasmio.
+
+Reads config.json (sources/telegram/git) and rules.json (categories,
+weights, scoring params, priority thresholds). Every fetched item is
+classified into categories and given a Relevance Score (0-100) and a
+Priority. Output is ranked by priority for Telegram and stored as
+Markdown + JSONL in the git data dir.
+"""
 
 import json
 import os
-import sys
-import hashlib
 import time
 import datetime
 import argparse
 import re
 import html
-import subprocess
+import hashlib
 from pathlib import Path
 from urllib.request import urlopen, Request
 from urllib.parse import quote_plus
-from email.utils import parsedate_to_datetime
 
 HERE = Path(__file__).resolve().parent
 CONFIG = HERE / "config.json"
-STATE = HERE / "state.json"
+RULES = HERE / "rules.json"
+STATE = HERE / "data" / "seen.json"
 UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
 
 
-def load_config():
-    with open(CONFIG, "r", encoding="utf-8") as f:
+def load_json(path):
+    with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
-def load_state():
-    if STATE.exists():
-        with open(STATE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return {"seen": []}
-
-
-def save_state(state):
-    with open(STATE, "w", encoding="utf-8") as f:
-        json.dump(state, f, ensure_ascii=False, indent=2)
+def save_json(path, obj):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(obj, f, ensure_ascii=False, indent=2)
 
 
 def fetch(url, timeout=30, headers=None):
@@ -49,22 +47,27 @@ def fetch(url, timeout=30, headers=None):
 
 
 def item_id(source, url, title, published):
-    key = f"{source}|{url}|{title[:80]}|{published}"
+    key = f"{source}|{url}|{title[:120]}|{published}"
     return hashlib.sha256(key.encode("utf-8")).hexdigest()
+
+
+def priority_for(score, prio):
+    for name, p in prio.items():
+        if score >= p["min"]:
+            return name, p["label_fa"]
+    return "low", prio["low"]["label_fa"]
 
 
 # --------------------------- sources ---------------------------
 
 def scan_google_news(cfg, query):
-    """Google News RSS search. Free, no API key."""
     base = cfg["sources"]["google_news"]["base"]
     url = f"{base}?q={quote_plus(query)}&hl=en"
     try:
         raw = fetch(url)
     except Exception as e:
-        print(f"[google_news] fetch error for '{query}': {e}")
+        print(f"[news] fetch error: {e}")
         return []
-
     items = []
     for m in re.finditer(r"<item>(.*?)</item>", raw, re.S):
         block = m.group(1)
@@ -84,22 +87,19 @@ def scan_google_news(cfg, query):
             "source": "google_news",
             "title": t,
             "url": l,
-            "snippet": d[:300],
+            "snippet": d[:500],
             "published": p,
-            "query": query,
         })
     return items
 
 
-def scan_telegram_channel(username, query):
-    """Read a public Telegram channel via t.me/s/UNAME. Free, no login."""
+def scan_telegram_channel(username):
     url = f"https://t.me/s/{username}"
     try:
         raw = fetch(url)
     except Exception as e:
         print(f"[telegram] fetch error for {username}: {e}")
         return []
-
     items = []
     for m in re.finditer(
         r'<div class="tgme_widget_message[^"]*"[^>]*data-post="([^"]+)"[^>]*>(.*?)</div>\s*<div class="tgme_widget_message_date_time">',
@@ -108,28 +108,26 @@ def scan_telegram_channel(username, query):
         post_id, body = m.group(1), m.group(2)
         texts = re.findall(r"<div class=\"tgme_widget_message_text[^\"]*\">(.*?)</div>", body, re.S)
         text = " ".join(html.unescape(re.sub(r"<[^>]+>", "", tp)).strip() for tp in texts)
-        if query.lower() in text.lower():
-            link = f"https://t.me/{post_id}"
-            items.append({
-                "id": item_id("telegram", link, text[:80], post_id),
-                "platform": "telegram",
-                "source": username,
-                "title": text[:140],
-                "url": link,
-                "snippet": text[:400],
-                "published": post_id,
-                "query": query,
-            })
+        if not text:
+            continue
+        link = f"https://t.me/{post_id}"
+        items.append({
+            "id": item_id("telegram", link, text[:120], post_id),
+            "platform": "telegram",
+            "source": username,
+            "title": text[:160],
+            "url": link,
+            "snippet": text[:600],
+            "published": post_id,
+        })
     return items
 
 
 def scan_web(cfg, query):
-    """Best-effort web search for X/IG/LinkedIn via a free no-key engine."""
     sites = cfg["sources"]["web_search"]["sites"]
     items = []
     for site in sites:
-        q = f'site:{site} "{query}"'.replace('"', "%22")
-        url = f"https://www.google.com/search?q={quote_plus(q)}&num=20"
+        url = f"https://www.google.com/search?q={quote_plus(f'site:{site} ({query})')}&num=20"
         try:
             raw = fetch(url)
         except Exception as e:
@@ -145,78 +143,202 @@ def scan_web(cfg, query):
                 "id": item_id("web", link, title, ""),
                 "platform": site,
                 "source": "web_search",
-                "title": title[:200],
+                "title": title[:220],
                 "url": link,
                 "snippet": "",
                 "published": "",
-                "query": query,
             })
     return items
 
 
+# --------------------------- scoring ---------------------------
+
+def match_keywords(text, category):
+    """Return list of (kw_text, weight, in_title) matches for a category."""
+    lower = (text or "").lower()
+    title_lower = (text or "").lower()
+    # search both title and body: caller passes joined text
+    hits = []
+    for kw in category["keywords"]:
+        kwt = kw["text"].lower()
+        if kwt in lower:
+            hits.append((kw["text"], kw["weight"], False))
+    return hits
+
+
+def score_item(item, rules):
+    """Classify an item into categories and compute relevance score."""
+    sc = rules["scoring"]
+    text = f"{item['title']} {item['snippet']}".lower()
+    title = item["title"].lower()
+
+    matched = {}   # category_id -> {strength, hits, labels}
+    for cat in rules["categories"]:
+        hits = []
+        strength = 0.0
+        for kw in cat["keywords"]:
+            kwt = kw["text"].lower()
+            in_title = kwt in title
+            in_body = kwt in text
+            if not (in_title or in_body):
+                continue
+            mult = sc.get("title_multiplier", 2.0) if in_title else 1.0
+            hits.append((kw["text"], kw["weight"], in_title))
+            strength += kw["weight"] * mult
+        if hits:
+            matched[cat["id"]] = {
+                "label": cat["label"],
+                "label_fa": cat["label_fa"],
+                "type": cat["type"],
+                "weight": cat["weight"],
+                "cap": cat.get("cap", 100),
+                "is_brand": cat.get("is_brand", False),
+                "strength": strength,
+                "hits": hits,
+            }
+
+    if not matched:
+        return None
+
+    # primary category = strongest keyword match
+    best = max(matched.values(), key=lambda m: (m["strength"], m["weight"]))
+    secondary = [m for cid, m in matched.items() if m is not best]
+
+    # strength normalised against the primary category's own keyword hits
+    str_norm = min(1.0, best["strength"] / sc.get("relevance_divisor", 2.0))
+    # category weight of the primary category drives the score
+    cat_norm = min(1.0, best["weight"] / sc.get("coverage_divisor", 0.30))
+    # secondary categories add a small bonus only
+    secondary_bonus = 0.03 * len(secondary)
+
+    score = 100 * (0.6 * str_norm + 0.4 * cat_norm + secondary_bonus)
+    brand_matched = best["is_brand"]
+    if brand_matched:
+        score += sc.get("brand_bonus", 20)
+        score = max(score, sc.get("brand_floor", 80))
+    else:
+        # cap by the primary category so trend/competitor news never reads as critical
+        score = min(score, best.get("cap", 100))
+    score = round(min(100.0, score))
+
+    prio, prio_fa = priority_for(score, rules["priorities"])
+
+    # reasons
+    reasons = []
+    for cat_id, m in matched.items():
+        reason_hits = ", ".join(f"«{h[0]}»" + (" (عنوان)" if h[2] else "") for h in m["hits"][:3])
+        reasons.append(f"[{m['label_fa']} {int(m['weight']*100)}%] {reason_hits}")
+    if brand_matched:
+        reasons.append("ارتباط مستقیم با رسمیو → امتیاز اضافه")
+
+    return {
+        "category": best["label"],
+        "category_id": next(k for k, v in matched.items() if v is best),
+        "categories": sorted(matched.keys()),
+        "type": best["type"],
+        "type_fa": best["label_fa"],
+        "score": score,
+        "priority": prio,
+        "priority_fa": prio_fa,
+        "reasons": reasons,
+    }
+
+
 # --------------------------- engine ---------------------------
 
-def run_cycle(cfg, state, now, send_report=None):
-    seen = set(state["seen"])
+def category_query(rules, cat):
+    terms = " OR ".join(f'"{t}"' for t in cat["search"])
+    return f"({terms})"
+
+
+def fetch_all(cfg, rules, seen):
+    raw = []
+
+    for cat in rules["categories"]:
+        q = category_query(rules, cat)
+        print(f"[scan] {cat['label']} :: {q}")
+        raw.extend(scan_google_news(cfg, q))
+        time.sleep(0.3)
+
+    if cfg["sources"]["telegram_channels"]["enabled"]:
+        for ch in cfg["sources"]["telegram_channels"]["channels"]:
+            print(f"[scan] telegram::{ch}")
+            raw.extend(scan_telegram_channel(ch))
+            time.sleep(0.3)
+
+    if cfg["sources"]["web_search"]["enabled"]:
+        for cat in rules["categories"]:
+            if not cat.get("web_search"):
+                continue
+            q = category_query(rules, cat)
+            print(f"[scan] web::{cat['label']}")
+            raw.extend(scan_web(cfg, q))
+            time.sleep(0.3)
+
     results = []
+    min_score = rules["scoring"].get("min_score", 0)
+    for it in raw:
+        scored = score_item(it, rules)
+        if not scored:
+            continue
+        if it["id"] in seen:
+            continue
+        if scored["score"] < min_score:
+            continue
+        it.update(scored)
+        results.append(it)
 
-    for kw in cfg["keywords"]:
-        label = kw["label"]
-        for query in kw["queries"]:
-            print(f"[scan] {label}: '{query}'")
-            if cfg["sources"]["google_news"]["enabled"]:
-                for it in scan_google_news(cfg, query):
-                    if it["id"] not in seen:
-                        results.append(it)
-            if cfg["sources"]["web_search"]["enabled"]:
-                for it in scan_web(cfg, query):
-                    if it["id"] not in seen:
-                        results.append(it)
-        if cfg["sources"]["telegram_channels"]["enabled"]:
-            for ch in cfg["sources"]["telegram_channels"]["channels"]:
-                for it in scan_telegram_channel(ch, kw["queries"][0]):
-                    if it["id"] not in seen:
-                        results.append(it)
+    results.sort(key=lambda r: (r["score"], r["published"]), reverse=True)
+    return results
 
-    state["seen"].extend(it["id"] for it in results)
-    state["seen"] = state["seen"][-2000:]
-    save_state(state)
 
-    report = build_report(cfg, results, now)
+def run_cycle(cfg, rules, state, now, send_report=None):
+    seen = set(state["seen"])
+    results = fetch_all(cfg, rules, seen)
+    state["seen"].extend(r["id"] for r in results)
+    state["seen"] = state["seen"][-3000:]
+    save_json(STATE, state)
+
     if results:
-        write_data_files(cfg, report, now)
+        write_data_files(cfg, rules, results, now)
+
     if send_report is None:
         send_report = cfg["telegram"]["send_report"] and bool(
             os.environ.get("TELEGRAM_CHAT_ID", cfg["telegram"]["chat_id"])
         )
     if send_report:
-        send_telegram(cfg, report)
-    print(f"[done] {len(results)} new items")
-    return report
+        send_telegram(cfg, build_telegram_report(rules, results, now))
+
+    print(f"[done] {len(results)} new, " + ", ".join(f"{p}:{c}" for p, c in priority_counts(results).items()))
+    return results
 
 
-def build_report(cfg, results, now):
-    lines = []
-    lines.append(f"# Marketing Monitor — {now.strftime('%Y-%m-%d %H:%M')}")
-    lines.append("")
+def priority_counts(results):
+    counts = {}
+    for r in results:
+        counts[r["priority"]] = counts.get(r["priority"], 0) + 1
+    return counts
+
+
+def build_telegram_report(rules, results, now):
+    max_items = rules["scoring"].get("max_items_per_report", 12)
+    lines = [f"Market Intelligence — {now.strftime('%Y-%m-%d %H:%M')}"]
     if not results:
-        lines.append("No new mentions found.")
-    for kw in cfg["keywords"]:
-        label = kw["label"]
-        kw_items = [it for it in results if it["query"] in kw["queries"]]
-        if not kw_items:
-            continue
-        lines.append(f"## {label} ({len(kw_items)} new)")
-        for it in kw_items[:8]:
-            platform = it.get("platform", "")
-            lines.append(f"- [{it['title']}]({it['url']}) _{platform}_ — {it['snippet'][:90]}")
-        if len(kw_items) > 8:
-            lines.append(f"- … and {len(kw_items)-8} more")
-        lines.append("")
+        lines.append("No new relevant items.")
+        return "\n".join(lines)
+    for it in results[:max_items]:
+        tag = f"{it['priority_fa']} [{it['score']}/100]"
+        lines.append(f"• {tag} | {it['type_fa']}")
+        lines.append(f"  {it['title']}")
+        lines.append(f"  {it['url']}")
+        if it.get("reasons"):
+            lines.append(f"  دلیل: {'؛ '.join(it['reasons'][:2])}")
+    if len(results) > max_items:
+        lines.append(f"(+{len(results)-max_items} more)")
     return "\n".join(lines)
 
 
-# --------------------------- delivery ---------------------------
+# --------------------------- delivery & storage ---------------------------
 
 def send_telegram(cfg, text):
     token = os.environ.get("TELEGRAM_BOT_TOKEN", cfg["telegram"]["bot_token"])
@@ -225,7 +347,6 @@ def send_telegram(cfg, text):
     data = json.dumps({
         "chat_id": chat,
         "text": text[:4000],
-        "parse_mode": "Markdown",
         "disable_web_page_preview": True,
     }).encode()
     req = Request(url, data=data, headers={"Content-Type": "application/json", "User-Agent": UA}, method="POST")
@@ -237,49 +358,64 @@ def send_telegram(cfg, text):
         print(f"[telegram] send error: {e}")
 
 
-def write_data_files(cfg, report, now):
+def write_data_files(cfg, rules, results, now):
     d = HERE / cfg["git"]["data_dir"]
     d.mkdir(exist_ok=True)
     day = now.strftime("%Y-%m")
-    path = d / f"{day}.md"
-    with open(path, "a", encoding="utf-8") as f:
-        f.write(report + "\n\n")
+    md_path = d / f"{day}.md"
+    jl_path = d / f"{day}.jsonl"
 
+    md_lines = [f"# Market Intelligence Feed — {now.strftime('%Y-%m-%d %H:%M')}", ""]
+    for it in results:
+        md_lines.append(f"## [{it['score']}/100] {it['priority_fa']} — {it['type_fa']}")
+        md_lines.append(f"- {it['title']}")
+        md_lines.append(f"- {it['url']}")
+        md_lines.append(f"- Category: {it['category']} | Reasons: {'; '.join(it['reasons'])}")
+        md_lines.append("")
+    with open(md_path, "a", encoding="utf-8") as f:
+        f.write("\n".join(md_lines) + "\n")
 
-def git_push(cfg):
-    try:
-        subprocess.run(["git", "-C", str(HERE), "config", "user.email", os.environ.get("GIT_EMAIL", "agent@users.noreply.github.com")], check=True, capture_output=True)
-        subprocess.run(["git", "-C", str(HERE), "config", "user.name", os.environ.get("GIT_USER", "marketing-monitor")], check=True, capture_output=True)
-        subprocess.run(["git", "-C", str(HERE), "add", "-A"], check=True, capture_output=True)
-        subprocess.run(
-            ["git", "-C", str(HERE), "commit", "-m", f"{datetime.datetime.utcnow().isoformat()} report"],
-            check=True, capture_output=True,
-        )
-        remote = cfg["git"]["repo_url"]
-        if os.environ.get("CI", ""):
-            r = subprocess.run(["git", "-C", str(HERE), "remote", "set-url", "origin", remote], capture_output=True)
-        subprocess.run(["git", "-C", str(HERE), "push", "origin", "HEAD"], check=True, capture_output=True)
-        print("[git] pushed")
-    except subprocess.CalledProcessError as e:
-        print(f"[git] error: {e.stderr.decode(errors='replace')[:500]}")
+    with open(jl_path, "a", encoding="utf-8") as f:
+        for it in results:
+            rec = {
+                "id": it["id"],
+                "ts": now.isoformat(timespec="seconds"),
+                "title": it["title"],
+                "url": it["url"],
+                "source": it["source"],
+                "platform": it["platform"],
+                "published": it["published"],
+                "snippet": it.get("snippet", ""),
+                "category": it["category"],
+                "category_id": it["category_id"],
+                "categories": it["categories"],
+                "type": it["type"],
+                "score": it["score"],
+                "priority": it["priority"],
+                "reasons": it["reasons"],
+            }
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--once", action="store_true", help="run a single cycle and exit")
-    ap.add_argument("--send-report", action="store_true", default=None, help="send to Telegram")
-    ap.add_argument("--no-report-flag", action="store_true", dest="no_report_flag", help="send if env present")
+    ap.add_argument("--send-report", action="store_true", default=None, help="force send to Telegram")
     args = ap.parse_args()
 
-    cfg = load_config()
-    state = load_state()
+    cfg = load_json(CONFIG)
+    rules = load_json(RULES)
+    STATE.parent.mkdir(exist_ok=True)
+    state = {"seen": []}
+    if STATE.exists():
+        state = load_json(STATE)
 
     if args.once:
-        run_cycle(cfg, state, datetime.datetime.now(), send_report=args.send_report)
+        run_cycle(cfg, rules, state, datetime.datetime.now(), send_report=args.send_report)
         return
 
     while True:
-        run_cycle(cfg, state, datetime.datetime.now())
+        run_cycle(cfg, rules, state, datetime.datetime.now())
         time.sleep(cfg["interval_hours"] * 3600)
 
 

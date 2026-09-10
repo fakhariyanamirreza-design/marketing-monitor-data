@@ -1,8 +1,5 @@
 {
   "interval_hours": 3,
-  "keywords": [
-    {"label": "my_brand", "queries": ["your brand name", "your product"]}
-  ],
   "sources": {
     "telegram_channels": {
       "enabled": true,
@@ -24,7 +21,6 @@
   },
   "git": {
     "repo_url": "https://github.com/fakhariyanamirreza-design/marketing-monitor-data.git",
-    "data_dir": "data",
-    "commit_message_prefix": "report"
+    "data_dir": "data"
   }
 }
