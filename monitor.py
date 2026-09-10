@@ -242,7 +242,6 @@ def write_data_files(cfg, report, now):
     path = d / f"{day}.md"
     with open(path, "a", encoding="utf-8") as f:
         f.write(report + "\n\n")
-    git_push(cfg)
 
 
 def git_push(cfg):

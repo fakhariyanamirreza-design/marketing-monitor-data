@@ -27,7 +27,7 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           GIT_USER: github-actions[bot]
           GIT_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
-        run: python monitor.py --once --no-report-flag
+        run: python monitor.py --once
 
       - name: Push results
         if: always()
