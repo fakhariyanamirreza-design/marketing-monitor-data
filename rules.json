@@ -179,9 +179,10 @@
       "cap": 72,
       "is_brand": false,
       "search": [
-        "AI Company Intelligence",
-        "AI Business Intelligence",
-        "Iran AI OR هوش مصنوعی ایران",
+        "هوش مصنوعی ایران",
+        "رونمایی هوش مصنوعی",
+        "شرکت هوش مصنوعی",
+        "Iran AI company",
         "Iran tech OR فناوری ایران"
       ],
       "keywords": [
@@ -308,10 +309,10 @@
       "cap": 72,
       "is_brand": false,
       "search": [
-        "Market Intelligence",
-        "Competitive Intelligence",
-        "Iran economy OR اقتصاد ایران OR بورس ایران",
-        "Iran market OR بازار ایران"
+        "تحلیل بازار ایران",
+        "بورس اوراق بهادار ایران",
+        "اقتصاد ایران",
+        "Iran economy OR Iran market"
       ],
       "keywords": [
         {
@@ -628,9 +629,10 @@
       "weight": 0.15,
       "is_brand": false,
       "search": [
-        "Company Data Platform",
-        "B2B Data Platform",
-        "Iran company OR شناسه ملی شرکت OR ثبت شرکت"
+        "شناسه ملی شرکت",
+        "اطلاعات شرکت‌های ایرانی",
+        "بانک اطلاعات شرکت‌ها",
+        "Iran company OR ثبت شرکت"
       ],
       "keywords": [
         {
