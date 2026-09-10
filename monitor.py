@@ -348,21 +348,34 @@ def priority_counts(results):
 
 
 def build_telegram_report(rules, results, now):
-    max_items = rules["scoring"].get("max_items_per_report", 12)
+    max_items = rules["scoring"].get("max_items_per_report", 8)
+    max_chars = 3900
+    budget_left = max_chars
     lines = [f"<b>Market Intelligence — {now.strftime('%Y-%m-%d %H:%M')}</b>"]
     if not results:
         lines.append("خبر مرتبط جدیدی یافت نشد.")
         return "\n".join(lines)
-    for it in results[:max_items]:
+    shown = 0
+    for it in results:
         tag = f"{it['priority_fa']} [{it['score']}/100]"
         link = _escape_html(it["url"])
         title = _escape_html(it["title"])
-        lines.append(f"• {tag} | {it['type_fa']}")
-        lines.append(f'  <a href="{link}">{title}</a>')
+        block = [
+            f"• {tag} | {it['type_fa']}",
+            f'  <a href="{link}">{title}</a>',
+        ]
         if it.get("reasons"):
-            lines.append(f"  <i>دلیل: {'؛ '.join(_escape_html(r) for r in it['reasons'][:2])}</i>")
-    if len(results) > max_items:
-        lines.append(f"(+{len(results)-max_items} خبر دیگر)")
+            block.append(f"  <i>دلیل: {'؛ '.join(_escape_html(r) for r in it['reasons'][:2])}</i>")
+        block_chars = sum(len(l) + 1 for l in block) + 1
+        if budget_left - block_chars < 0:
+            break
+        budget_left -= block_chars
+        lines.extend(block)
+        shown += 1
+        if shown >= max_items:
+            break
+    if shown < len(results):
+        lines.append(f"(+{len(results)-shown} خبر دیگر)")
     return "\n".join(lines)
 
 
