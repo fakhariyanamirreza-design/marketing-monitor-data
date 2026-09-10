@@ -126,154 +126,19 @@
       "is_brand": false,
       "web_search": true,
       "search": [
-        "Crunchbase",
-        "PitchBook",
-        "ZoomInfo",
-        "CB Insights",
-        "Dealroom",
-        "Tracxn",
-        "لینکا"
+        "لینکا",
+        "لینکا شرکت",
+        "پلتفرم لینکا",
+        "لینکا استعلام"
       ],
       "keywords": [
         {
-          "text": "Crunchbase",
-          "weight": 1.3
-        },
-        {
-          "text": "Crunchbase Pro",
-          "weight": 1.1
-        },
-        {
-          "text": "Crunchbase product",
-          "weight": 1.0
-        },
-        {
-          "text": "Crunchbase AI",
-          "weight": 1.2
-        },
-        {
-          "text": "Crunchbase pricing",
-          "weight": 1.0
-        },
-        {
-          "text": "Crunchbase company data",
-          "weight": 1.0
-        },
-        {
-          "text": "PitchBook",
-          "weight": 1.3
-        },
-        {
-          "text": "PitchBook AI",
-          "weight": 1.2
-        },
-        {
-          "text": "PitchBook pricing",
-          "weight": 1.0
-        },
-        {
-          "text": "PitchBook company intelligence",
-          "weight": 1.1
-        },
-        {
-          "text": "CB Insights",
-          "weight": 1.3
-        },
-        {
-          "text": "Dealroom",
-          "weight": 1.3
-        },
-        {
-          "text": "Dealroom AI",
-          "weight": 1.2
-        },
-        {
-          "text": "Dealroom company data",
-          "weight": 1.0
-        },
-        {
-          "text": "Dealroom pricing",
-          "weight": 1.0
-        },
-        {
-          "text": "Tracxn",
-          "weight": 1.3
-        },
-        {
-          "text": "Tracxn AI",
-          "weight": 1.2
-        },
-        {
-          "text": "Tracxn product",
-          "weight": 1.0
-        },
-        {
-          "text": "Tracxn pricing",
-          "weight": 1.0
-        },
-        {
-          "text": "ZoomInfo",
-          "weight": 1.3
-        },
-        {
-          "text": "ZoomInfo AI",
-          "weight": 1.2
-        },
-        {
-          "text": "ZoomInfo product",
-          "weight": 1.0
-        },
-        {
-          "text": "ZoomInfo pricing",
-          "weight": 1.0
-        },
-        {
-          "text": "Apollo",
-          "weight": 1.2
-        },
-        {
-          "text": "Clearbit",
-          "weight": 1.2
-        },
-        {
-          "text": "LinkedIn Sales Navigator",
-          "weight": 1.2
-        },
-        {
-          "text": "Dun & Bradstreet",
-          "weight": 1.2
-        },
-        {
-          "text": "Owler",
-          "weight": 1.1
-        },
-        {
-          "text": "Similarweb",
-          "weight": 1.2
-        },
-        {
-          "text": "PrivCo",
-          "weight": 1.1
-        },
-        {
-          "text": "GlobalData",
-          "weight": 1.1
-        },
-        {
-          "text": "Companies House",
-          "weight": 1.2
-        },
-        {
-          "text": "Orbis",
-          "weight": 1.1
-        },
-        {
-          "text": "Bureau van Dijk",
-          "weight": 1.2
-        },
-        {
           "text": "لینکا",
           "weight": 1.3
+        },
+        {
+          "text": "لینکا.ir",
+          "weight": 1.1
         },
         {
           "text": "Linka",
