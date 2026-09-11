@@ -1541,6 +1541,166 @@
           "weight": 1.0
         }
       ]
+    },
+    {
+      "id": "iran_market_economy",
+      "label": "Iran Market & Economy",
+      "label_fa": "بازار و اقتصاد ایران",
+      "type": "market_trend",
+      "weight": 0.15,
+      "cap": 65,
+      "is_brand": false,
+      "search": [
+        "اقتصاد ایران",
+        "بورس اوراق بهادار",
+        "بازار سهام"
+      ],
+      "keywords": [
+        {
+          "text": "بورس",
+          "weight": 1.0
+        },
+        {
+          "text": "بازار سهام",
+          "weight": 1.1
+        },
+        {
+          "text": "نرخ ارز",
+          "weight": 1.0
+        },
+        {
+          "text": "دلار",
+          "weight": 0.9
+        },
+        {
+          "text": "تورم",
+          "weight": 1.1
+        },
+        {
+          "text": "طلا",
+          "weight": 0.9
+        },
+        {
+          "text": "سکه",
+          "weight": 0.9
+        },
+        {
+          "text": "تک‌نرخ",
+          "weight": 0.9
+        },
+        {
+          "text": "بانک مرکزی",
+          "weight": 1.1
+        },
+        {
+          "text": "شورای پول و اعتبار",
+          "weight": 1.1
+        },
+        {
+          "text": "نرخ سود",
+          "weight": 1.0
+        },
+        {
+          "text": "تسهیلات",
+          "weight": 0.9
+        },
+        {
+          "text": "وام",
+          "weight": 0.8
+        },
+        {
+          "text": "تحریم",
+          "weight": 1.0
+        },
+        {
+          "text": "صادرات",
+          "weight": 0.9
+        },
+        {
+          "text": "واردات",
+          "weight": 0.9
+        },
+        {
+          "text": "پتروشیمی",
+          "weight": 0.8
+        },
+        {
+          "text": "نفت",
+          "weight": 0.9
+        },
+        {
+          "text": "گاز",
+          "weight": 0.8
+        },
+        {
+          "text": "قیمت نفت",
+          "weight": 1.0
+        },
+        {
+          "text": "کارمزد",
+          "weight": 0.9
+        },
+        {
+          "text": "اوراق",
+          "weight": 0.9
+        },
+        {
+          "text": "سود بادآورده",
+          "weight": 1.0
+        },
+        {
+          "text": "یارانه",
+          "weight": 0.9
+        },
+        {
+          "text": "بودجه",
+          "weight": 0.9
+        },
+        {
+          "text": "مالیات",
+          "weight": 0.9
+        },
+        {
+          "text": "تعرفه",
+          "weight": 0.9
+        },
+        {
+          "text": "تولید",
+          "weight": 0.8
+        },
+        {
+          "text": "شرکت",
+          "weight": 0.6
+        },
+        {
+          "text": "کدال",
+          "weight": 1.0
+        },
+        {
+          "text": "TPSA",
+          "weight": 0.8
+        },
+        {
+          "text": "تستا",
+          "weight": 0.8
+        },
+        {
+          "text": "خودرو",
+          "weight": 0.8
+        },
+        {
+          "text": "دولت",
+          "weight": 0.6
+        },
+        {
+          "text": "مجلس",
+          "weight": 0.6
+        },
+        {
+          "text": "قانون",
+          "weight": 0.7
+        }
+      ]
     }
   ],
   "scoring": {

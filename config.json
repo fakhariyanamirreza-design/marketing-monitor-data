@@ -10,6 +10,23 @@
         "tejaratnews"
       ]
     },
+    "eitaa_channels": {
+      "enabled": true,
+      "channels": [
+        "boursenews",
+        "eco_news",
+        "khabaronline",
+        "mehrnews",
+        "tsetmc",
+        "iranbourse",
+        "boursonline",
+        "boursnews",
+        "bourse24",
+        "digiato",
+        "aitech",
+        "iranstartup"
+      ]
+    },
     "google_news": {
       "enabled": true,
       "base": "https://news.google.com/rss/search",

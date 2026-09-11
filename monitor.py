@@ -130,26 +130,29 @@ def scan_iranian_rss(feed):
     return parse_rss_items(raw, platform="news", source=feed)
 
 
-def scan_telegram_channel(username):
-    url = f"https://t.me/s/{username}"
+def scan_telegram_channel(username, host="t.me"):
+    """Scan a public Telegram (or Eitaa) channel page. host: t.me or eitaa.com"""
+    if host == "eitaa.com":
+        url = f"https://eitaa.com/{username}"
+        regex = r'data-post="([^"]+)".*?<div class="etme_widget_message_text[^"]*"[^>]*>(.*?)</div>'
+    else:
+        url = f"https://t.me/s/{username}"
+        regex = r'data-post="([^"]+)".*?<div class="tgme_widget_message_text[^"]*"[^>]*>(.*?)</div>'
     try:
         raw = fetch(url)
     except Exception as e:
-        print(f"[telegram] fetch error for {username}: {e}")
+        print(f"[{host}] fetch error for {username}: {e}")
         return []
     items = []
-    for m in re.finditer(
-        r'data-post="([^"]+)".*?<div class="tgme_widget_message_text[^"]*"[^>]*>(.*?)</div>',
-        raw, re.S,
-    ):
+    for m in re.finditer(regex, raw, re.S):
         post_id, body = m.group(1), m.group(2)
         text = html.unescape(re.sub(r"<br\s*/?>", " ", re.sub(r"<[^>]+>", "", body))).strip()
         if not text:
             continue
-        link = f"https://t.me/{post_id}"
+        link = f"{'https://t.me' if host == 't.me' else 'https://eitaa.com'}/{post_id}"
         items.append({
-            "id": item_id("telegram", link, text[:120], post_id),
-            "platform": "telegram",
+            "id": item_id("telegram" if host == "t.me" else "eitaa", link, text[:120], post_id),
+            "platform": "telegram" if host == "t.me" else "eitaa",
             "source": username,
             "title": text[:160],
             "url": link,
@@ -292,6 +295,12 @@ def fetch_all(cfg, rules, seen):
         for ch in cfg["sources"]["telegram_channels"]["channels"]:
             print(f"[scan] telegram::{ch}")
             raw.extend(scan_telegram_channel(ch))
+            time.sleep(0.3)
+
+    if cfg["sources"].get("eitaa_channels", {}).get("enabled", False):
+        for ch in cfg["sources"]["eitaa_channels"]["channels"]:
+            print(f"[scan] eitaa::{ch}")
+            raw.extend(scan_telegram_channel(ch, host="eitaa.com"))
             time.sleep(0.3)
 
     if cfg["sources"]["iranian_rss"]["enabled"]:
