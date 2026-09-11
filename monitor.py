@@ -388,6 +388,166 @@ def build_telegram_report(rules, results, now):
     return "\n".join(lines)
 
 
+# --------------------------- period reports ---------------------------
+
+COMPLAINT_KW = [
+    "شکایت", "مشکل", "باگ", "خطا", "خرابی", "خراب", "عدم دسترسی",
+    "پشتیبانی ضعیف", "اعتراض", "نارضایتی", "قطعی", "آسیب به سرویس",
+]
+
+
+def _label_fa(rules, cid):
+    for c in rules["categories"]:
+        if c["id"] == cid:
+            return c["label_fa"]
+    return "سایر"
+
+
+def _prio_fa(rules, key):
+    p = rules["priorities"].get(key, {})
+    return p.get("label_fa", key)
+
+
+def _item_block(it, rules, num=None):
+    tag = f"{_prio_fa(rules, it.get('priority', 'low'))} [{it.get('score', 0)}/100]"
+    prefix = f"{num}. " if num else "• "
+    return f'{prefix}{tag} | {it.get("type_fa", "")} — <a href="{_escape_html(it.get("url", ""))}">{_escape_html(it.get("title", ""))}</a>'
+
+
+def load_period_items(cfg, days):
+    """Load all records from data/*.jsonl within the last `days` days."""
+    d = HERE / cfg["git"]["data_dir"]
+    cutoff = datetime.datetime.now() - datetime.timedelta(days=days)
+    out = []
+    if not d.is_dir():
+        return out
+    for p in sorted(d.glob("*.jsonl")):
+        with open(p, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    rec = json.loads(line)
+                    ts = datetime.datetime.fromisoformat(rec["ts"])
+                except Exception:
+                    continue
+                if ts >= cutoff:
+                    out.append(rec)
+    return out
+
+
+def _counts(values):
+    d = {}
+    for v in values:
+        d[v] = d.get(v, 0) + 1
+    return d
+
+
+def _prio_summary(rules, counts):
+    order = ["critical", "high", "medium", "low"]
+    return "، ".join(f"{_prio_fa(rules, k)}: {counts.get(k, 0)}" for k in order if counts.get(k, 0))
+
+
+def build_daily_report(cfg, rules, now):
+    items = load_period_items(cfg, 1)
+    if not items:
+        return "<b>گزارش روزانه — رسمیو</b>\nدر ۲۴ ساعت گذشته خبری ثبت نشد."
+
+    lines = [f"<b>گزارش روزانه — رسمیو</b>", f"بازه: ۲۴ ساعت گذشته ({now.strftime('%Y-%m-%d')})"]
+    pc = _counts(it.get("priority", "low") for it in items)
+    lines.append(f"\n📊 مجموع: {len(items)} خبر | {_prio_summary(rules, pc)}")
+
+    cat_counts = _counts(it.get("category_id") for it in items)
+    banded = [f"▫️ {_label_fa(rules, cid)}: {n}" for cid, n in sorted(cat_counts.items(), key=lambda kv: -kv[1])]
+    lines.append("\n🗂 به تفکیک دسته:\n" + "\n".join(banded))
+
+    src_counts = _counts(it.get("platform", "news") for it in items)
+    src_label = {"news": "خبرگزاری‌ها", "telegram": "تلگرام", "eitaa": "ایتا"}
+    src_line = "، ".join(f"{src_label.get(k, k)}: {n}" for k, n in sorted(src_counts.items(), key=lambda kv: -kv[1]))
+    lines.append(f"\n📡 به تفکیک منبع: {src_line}")
+
+    brand = [it for it in items if "رسمیو" in f"{it.get('title', '')} {it.get('snippet', '')}"]
+    if brand:
+        lines.append(f"\n🟠 منشن رسمیو: {len(brand)}")
+
+    top = sorted(items, key=lambda x: x.get("score", 0), reverse=True)[:5]
+    lines.append("\n🏆 ۵ خبر برتر:")
+    lines.extend(_item_block(it, rules, i + 1) for i, it in enumerate(top))
+    return "\n".join(lines)
+
+
+def _has_complaint(it):
+    text = f"{it.get('title', '')} {it.get('snippet', '')}"
+    # match full words only so «قطعی» doesn't match «مقطعی» / «متوقف»
+    guard = r"(?<![A-Za-z\u0600-\u06FF])" 
+    for k in COMPLAINT_KW:
+        if re.search(guard + re.escape(k) + r"(?![A-Za-z\u0600-\u06FF])", text):
+            return True
+    return False
+
+
+def _top_keywords(rules, items, limit):
+    freq = {}
+    for it in items:
+        text = f"{it.get('title', '')} {it.get('snippet', '')}".lower()
+        for cat in rules["categories"]:
+            for kw in cat["keywords"]:
+                kt = kw["text"].lower()
+                if len(kt) < 2:
+                    continue
+                if kt in text and _is_persian(kt):
+                    freq[kw["text"]] = freq.get(kw["text"], 0) + 1
+    return sorted(freq.items(), key=lambda kv: -kv[1])[:limit]
+
+
+def build_weekly_report(cfg, rules, now):
+    items = load_period_items(cfg, 7)
+    if not items:
+        return "<b>گزارش هفتگی — رسمیو</b>\nدر ۷ روز گذشته خبری ثبت نشد."
+
+    start = (now - datetime.timedelta(days=6)).strftime("%Y-%m-%d")
+    lines = [f"<b>گزارش هفتگی — رسمیو</b>", f"بازه: {start} تا {now.strftime('%Y-%m-%d')}"]
+
+    pc = _counts(it.get("priority", "low") for it in items)
+    lines.append(f"\n📊 مجموع: {len(items)} خبر | {_prio_summary(rules, pc)}")
+
+    cat_counts = _counts(it.get("category_id") for it in items)
+    lines.append("\n🔊 سهم صدا (Share of Voice):")
+    for cid, n in sorted(cat_counts.items(), key=lambda kv: -kv[1]):
+        pct = int(round(100.0 * n / len(items)))
+        lines.append(f"  {_label_fa(rules, cid)}: {n} ({pct}٪)")
+
+    brand = [it for it in items if "رسمیو" in f"{it.get('title', '')} {it.get('snippet', '')}"]
+    comp = [it for it in items if "لینکا" in f"{it.get('title', '')} {it.get('snippet', '')}"]
+    lines.append(f"\n🟠 منشن رسمیو: {len(brand)}")
+    lines.append(f"👥 منشن رقیب (لینکا): {len(comp)}")
+
+    complaints = [it for it in items if _has_complaint(it)]
+    if complaints:
+        lines.append(f"\n⚠️ هشدار / شکایت مشتریان: {len(complaints)}")
+        for it in complaints[:3]:
+            lines.append(_item_block(it, rules))
+    else:
+        lines.append("\n⚠️ هشدار / شکایت مشتریان: 0")
+
+    topics = _top_keywords(rules, items, 10)
+    if topics:
+        lines.append("\n🔥 موضوعات داغ هفته:")
+        for k, n in topics:
+            lines.append(f"  {k}: {n}")
+    return "\n".join(lines)
+
+
+def dispatch_report(cfg, text):
+    if os.environ.get("TELEGRAM_BOT_TOKEN", cfg["telegram"]["bot_token"]) and os.environ.get(
+        "TELEGRAM_CHAT_ID", cfg["telegram"]["chat_id"]
+    ):
+        send_telegram(cfg, text)
+    else:
+        print(text)
+
+
 # --------------------------- delivery & storage ---------------------------
 
 def send_telegram(cfg, text):
@@ -451,7 +611,9 @@ def write_data_files(cfg, rules, results, now):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--once", action="store_true", help="run a single cycle and exit")
-    ap.add_argument("--send-report", action="store_true", default=None, help="force send to Telegram")
+    ap.add_argument("--send-report", action="store_true", default=None, help="force send to Telegram (None=auto)")
+    ap.add_argument("--daily-report", action="store_true", help="build & send daily summary (last 24h)")
+    ap.add_argument("--weekly-report", action="store_true", help="build & send weekly analysis (last 7 days)")
     args = ap.parse_args()
 
     cfg = load_json(CONFIG)
@@ -460,6 +622,13 @@ def main():
     state = {"seen": []}
     if STATE.exists():
         state = load_json(STATE)
+
+    if args.daily_report:
+        dispatch_report(cfg, build_daily_report(cfg, rules, datetime.datetime.now()))
+        return
+    if args.weekly_report:
+        dispatch_report(cfg, build_weekly_report(cfg, rules, datetime.datetime.now()))
+        return
 
     if args.once:
         run_cycle(cfg, rules, state, datetime.datetime.now(), send_report=args.send_report)

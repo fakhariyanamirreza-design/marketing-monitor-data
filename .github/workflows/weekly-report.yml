@@ -1,0 +1,27 @@
+name: weekly-report
+
+on:
+  schedule:
+    # Thursday 04:30 UTC = 08:00 Tehran (Asia/Tehran, no DST); weekly review at end of work week
+    - cron: "30 4 * * 4"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build & send weekly report
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python monitor.py --weekly-report
