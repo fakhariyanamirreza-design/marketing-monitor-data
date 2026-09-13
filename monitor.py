@@ -88,6 +88,20 @@ def _source_label(platform, source):
         return "ایسنا"
     if "mehrnews" in host:
         return "مهر"
+    if "khabaronline" in host:
+        return "خبرآنلاین"
+    if "entekhab" in host:
+        return "انتخاب"
+    if "tasnimnews" in host:
+        return "تسنیم"
+    if "donya-e-eqtesad" in host:
+        return "دنیای اقتصاد"
+    if "farsnews" in host:
+        return "فارس"
+    if "ilna" in host:
+        return "ایلنا"
+    if "pana.ir" in host:
+        return "پانا"
     return "خبرگزاری"
 
 
@@ -122,6 +136,13 @@ def scan_googlenews_rss(cfg, query, lang="en", geo="IR"):
     return parse_rss_items(raw, platform="news", source="google_news")
 
 
+def _strip_cdata(s):
+    """Remove <![CDATA[ ... ]]> wrappers, if present."""
+    if s.startswith("<![CDATA["):
+        s = s[9:-3]
+    return s
+
+
 def parse_rss_items(raw, platform, source):
     """Generic parser for any RSS/Atom feed."""
     items = []
@@ -133,10 +154,10 @@ def parse_rss_items(raw, platform, source):
         desc = re.search(r"<description>(.*?)</description>", block, re.S)
         if not title or not link:
             continue
-        t = html.unescape(title.group(1)).strip()
-        l = html.unescape(link.group(1)).strip()
-        p = pub.group(1).strip() if pub else ""
-        d = html.unescape(re.sub(r"<[^>]+>", "", desc.group(1))).strip() if desc else ""
+        t = _strip_cdata(html.unescape(title.group(1))).strip()
+        l = _strip_cdata(html.unescape(link.group(1))).strip()
+        p = _strip_cdata(pub.group(1)).strip() if pub else ""
+        d = _strip_cdata(html.unescape(re.sub(r"<[^>]+>", "", desc.group(1)))).strip() if desc else ""
         items.append({
             "id": item_id(source, l, t, p),
             "platform": platform,
@@ -159,18 +180,14 @@ def scan_iranian_rss(feed):
     return parse_rss_items(raw, platform="news", source=feed)
 
 
-def scan_telegram_channel(username, host="t.me"):
-    """Scan a public Telegram (or Eitaa) channel page. host: t.me or eitaa.com"""
-    if host == "eitaa.com":
-        url = f"https://eitaa.com/{username}"
-        regex = r'data-post="([^"]+)".*?<div class="etme_widget_message_text[^"]*"[^>]*>(.*?)</div>'
-    else:
-        url = f"https://t.me/s/{username}"
-        regex = r'data-post="([^"]+)".*?<div class="tgme_widget_message_text[^"]*"[^>]*>(.*?)</div>'
+def scan_telegram_channel(username):
+    """Scan a public Telegram channel page (t.me/s/...)."""
+    url = f"https://t.me/s/{username}"
+    regex = r'data-post="([^"]+)".*?<div class="tgme_widget_message_text[^"]*"[^>]*>(.*?)</div>'
     try:
         raw = fetch(url)
     except Exception as e:
-        print(f"[{host}] fetch error for {username}: {e}")
+        print(f"[telegram] fetch error for {username}: {e}")
         return []
     items = []
     for m in re.finditer(regex, raw, re.S):
@@ -178,10 +195,10 @@ def scan_telegram_channel(username, host="t.me"):
         text = html.unescape(re.sub(r"<br\s*/?>", " ", re.sub(r"<[^>]+>", "", body))).strip()
         if not text:
             continue
-        link = f"{'https://t.me' if host == 't.me' else 'https://eitaa.com'}/{post_id}"
+        link = f"https://t.me/{post_id}"
         items.append({
-            "id": item_id("telegram" if host == "t.me" else "eitaa", link, text[:120], post_id),
-            "platform": "telegram" if host == "t.me" else "eitaa",
+            "id": item_id("telegram", link, text[:120], post_id),
+            "platform": "telegram",
             "source": username,
             "title": text[:160],
             "url": link,
@@ -326,12 +343,6 @@ def fetch_all(cfg, rules, seen):
             raw.extend(scan_telegram_channel(ch))
             time.sleep(0.3)
 
-    if cfg["sources"].get("eitaa_channels", {}).get("enabled", False):
-        for ch in cfg["sources"]["eitaa_channels"]["channels"]:
-            print(f"[scan] eitaa::{ch}")
-            raw.extend(scan_telegram_channel(ch, host="eitaa.com"))
-            time.sleep(0.3)
-
     if cfg["sources"]["iranian_rss"]["enabled"]:
         for feed in cfg["sources"]["iranian_rss"]["feeds"]:
             print(f"[scan] ir_rss::{feed}")
@@ -413,10 +424,11 @@ def build_telegram_report(rules, results, now):
                 f"🔸 {_source_label(it.get('platform'), it.get('source', ''))} - "
                 f'<a href="{_escape_html(it.get("url", ""))}">{_escape_html(_clean_title(it.get("title", "")))}</a>'
             )
-            if budget_left - (len(block) + 1) < 0:
+            if budget_left - (len(block) + 2) < 0:
                 break
-            budget_left -= len(block) + 1
+            budget_left -= len(block) + 2
             lines.append(block)
+            lines.append("")  # blank line between news items
             shown += 1
             if shown >= max_items:
                 break

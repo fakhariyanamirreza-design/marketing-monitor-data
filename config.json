@@ -10,23 +10,6 @@
         "tejaratnews"
       ]
     },
-    "eitaa_channels": {
-      "enabled": true,
-      "channels": [
-        "boursenews",
-        "eco_news",
-        "khabaronline",
-        "mehrnews",
-        "tsetmc",
-        "iranbourse",
-        "boursonline",
-        "boursnews",
-        "bourse24",
-        "digiato",
-        "aitech",
-        "iranstartup"
-      ]
-    },
     "google_news": {
       "enabled": true,
       "base": "https://news.google.com/rss/search",
@@ -36,9 +19,13 @@
     "iranian_rss": {
       "enabled": true,
       "feeds": [
-        "https://irna.ir/rss",
+        "https://www.irna.ir/rss",
         "https://www.isna.ir/rss",
-        "https://www.mehrnews.com/rss"
+        "https://www.mehrnews.com/rss",
+        "https://www.khabaronline.ir/rss",
+        "https://www.entekhab.ir/fa/rss/allnews",
+        "https://www.tasnimnews.ir/fa/rss/feeds/7/0/0/0",
+        "https://www.donya-e-eqtesad.com/rss"
       ]
     }
   },
