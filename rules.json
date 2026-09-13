@@ -1709,8 +1709,7 @@
     "coverage_divisor": 0.3,
     "brand_bonus": 20,
     "brand_floor": 80,
-    "min_score": 40,
-    "max_items_per_report": 25
+    "min_score": 40
   },
   "priorities": {
     "critical": {

@@ -383,7 +383,8 @@ def run_cycle(cfg, rules, state, now, send_report=None):
             os.environ.get("TELEGRAM_CHAT_ID", cfg["telegram"]["chat_id"])
         )
     if send_report:
-        send_telegram(cfg, build_telegram_report(rules, results, now))
+        for text in build_telegram_messages(rules, results, now):
+            send_telegram(cfg, text)
 
     print(f"[done] {len(results)} new, " + ", ".join(f"{p}:{c}" for p, c in priority_counts(results).items()))
     return results
@@ -396,48 +397,35 @@ def priority_counts(results):
     return counts
 
 
-def build_telegram_report(rules, results, now):
-    max_items = rules["scoring"].get("max_items_per_report", 12)
-    max_chars = 3900
-    lines = [f"<b>Market Intelligence — {now.strftime('%Y-%m-%d %H:%M')}</b>"]
+def build_telegram_messages(rules, results, now):
+    """Build one Telegram message per category (max ~3900 chars each) so every news item is shown."""
+    head = f"<b>Market Intelligence — {now.strftime('%Y-%m-%d %H:%M')}</b>"
     if not results:
-        lines.append("خبر مرتبط جدیدی یافت نشد.")
-        return "\n".join(lines)
+        return [head + "\nخبر مرتبط جدیدی یافت نشد."]
 
-    # group by primary category so the reader knows which category each block is
     per_cat = {}
     for it in results:
         per_cat.setdefault(it["category_id"], []).append(it)
 
-    budget_left = max_chars
-    order = sorted(per_cat, key=lambda c: -len(per_cat[c]))
-    shown = 0
-    for cid in order:
-        group = per_cat[cid]
-        header = f"<b>{_label_fa(rules, cid)}</b>"
-        if budget_left - (len(header) + 1) < 60:
-            break
-        budget_left -= len(header) + 1
-        lines.append(header)
-        for it in group:
+    msgs = []
+    for cid in sorted(per_cat, key=lambda c: -len(per_cat[c])):
+        label = _label_fa(rules, cid)
+        lines = [f"<b>{label}</b>"]
+        budget = 3900 - len(head) - 1 - (len(label) + 7)
+        for it in per_cat[cid]:
             block = (
                 f"🔸 {_source_label(it.get('platform'), it.get('source', ''))} - "
                 f'<a href="{_escape_html(it.get("url", ""))}">{_escape_html(_clean_title(it.get("title", "")))}</a>'
             )
-            if budget_left - (len(block) + 2) < 0:
-                break
-            budget_left -= len(block) + 2
+            if budget - (len(block) + 2) < 0:
+                msgs.append("\n".join([head] + lines).rstrip("\n"))
+                lines = [f"<b>{label} (ادامه)</b>"]
+                budget = 3900 - len(head) - 1 - (len(label) + 16)
+            budget -= len(block) + 2
             lines.append(block)
             lines.append("")  # blank line between news items
-            shown += 1
-            if shown >= max_items:
-                break
-        if shown >= max_items:
-            break
-
-    if shown < len(results):
-        lines.append(f"(+{len(results) - shown} خبر دیگر)")
-    return "\n".join(lines)
+        msgs.append("\n".join([head] + lines).rstrip("\n"))
+    return msgs
 
 
 # --------------------------- period reports ---------------------------
