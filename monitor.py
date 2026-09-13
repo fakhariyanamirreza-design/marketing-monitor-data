@@ -102,6 +102,10 @@ def _source_label(platform, source):
         return "ایلنا"
     if "pana.ir" in host:
         return "پانا"
+    if "tejaratnews" in host:
+        return "تجارت‌نیوز"
+    if "hamshahrionline" in host:
+        return "همشهری"
     return "خبرگزاری"
 
 
@@ -383,8 +387,7 @@ def run_cycle(cfg, rules, state, now, send_report=None):
             os.environ.get("TELEGRAM_CHAT_ID", cfg["telegram"]["chat_id"])
         )
     if send_report:
-        for text in build_telegram_messages(rules, results, now):
-            send_telegram(cfg, text)
+        send_telegram(cfg, build_telegram_report(rules, results, now))
 
     print(f"[done] {len(results)} new, " + ", ".join(f"{p}:{c}" for p, c in priority_counts(results).items()))
     return results
@@ -397,35 +400,76 @@ def priority_counts(results):
     return counts
 
 
-def build_telegram_messages(rules, results, now):
-    """Build one Telegram message per category (max ~3900 chars each) so every news item is shown."""
-    head = f"<b>Market Intelligence — {now.strftime('%Y-%m-%d %H:%M')}</b>"
-    if not results:
-        return [head + "\nخبر مرتبط جدیدی یافت نشد."]
+def _norm_title(t):
+    """Normalize a title for duplicate detection (drop emojis/handles/URLs/punct, lowercase)."""
+    return re.sub(r"\s+", " ", re.sub(r"[\W_]+", " ", _clean_title(t).lower())).strip()
 
+
+def _dedup_results(results):
+    """Drop near-duplicate headlines (same story from several sources); higher score wins.
+
+    Fast word-set (Jaccard) similarity on normalized titles instead of expensive
+    all-pairs sequence matching. Titles sharing >= 55% of their words are treated
+    as the same story.
+    """
+    uniq, kept = [], []
+    for it in sorted(results, key=lambda x: -x.get("score", 0)):
+        nt = _norm_title(it.get("title", ""))
+        if not nt:
+            continue
+        words = set(nt.split())
+        dup = False
+        if words:
+            for _, keep_words in kept:
+                union = len(words | keep_words)
+                if union and len(words & keep_words) / union >= 0.55:
+                    dup = True
+                    break
+        if not dup:
+            kept.append((nt, words))
+            uniq.append(it)
+    return uniq
+
+
+def build_telegram_report(rules, results, now):
+    """One message per run, deduped, filling the Telegram limit (~4040 chars) with the most news."""
+    results = _dedup_results(results)
+    max_chars = 4040
+    lines = [f"<b>Market Intelligence — {now.strftime('%Y-%m-%d %H:%M')}</b>"]
+    if not results:
+        lines.append("خبر مرتبط جدیدی یافت نشد.")
+        return "\n".join(lines)
+
+    # group by primary category so the reader knows which category each block is
     per_cat = {}
     for it in results:
         per_cat.setdefault(it["category_id"], []).append(it)
 
-    msgs = []
-    for cid in sorted(per_cat, key=lambda c: -len(per_cat[c])):
-        label = _label_fa(rules, cid)
-        lines = [f"<b>{label}</b>"]
-        budget = 3900 - len(head) - 1 - (len(label) + 7)
-        for it in per_cat[cid]:
+    budget_left = max_chars - len(lines[0]) - 1
+    order = sorted(per_cat, key=lambda c: -len(per_cat[c]))
+    shown = 0
+    for cid in order:
+        group = per_cat[cid]
+        header = f"<b>{_label_fa(rules, cid)}</b>"
+        if budget_left - (len(header) + 1) < 40:
+            break
+        budget_left -= len(header) + 1
+        lines.append(header)
+        for it in group:
             block = (
                 f"🔸 {_source_label(it.get('platform'), it.get('source', ''))} - "
                 f'<a href="{_escape_html(it.get("url", ""))}">{_escape_html(_clean_title(it.get("title", "")))}</a>'
             )
-            if budget - (len(block) + 2) < 0:
-                msgs.append("\n".join([head] + lines).rstrip("\n"))
-                lines = [f"<b>{label} (ادامه)</b>"]
-                budget = 3900 - len(head) - 1 - (len(label) + 16)
-            budget -= len(block) + 2
+            if budget_left - (len(block) + 2) < 0:
+                break
+            budget_left -= len(block) + 2
             lines.append(block)
             lines.append("")  # blank line between news items
-        msgs.append("\n".join([head] + lines).rstrip("\n"))
-    return msgs
+            shown += 1
+
+    if shown < len(results):
+        lines.append(f"(+{len(results) - shown} خبر دیگر)")
+    return "\n".join(lines)
 
 
 # --------------------------- period reports ---------------------------
@@ -598,7 +642,7 @@ def send_telegram(cfg, text):
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     data = json.dumps({
         "chat_id": chat,
-        "text": text[:4000],
+        "text": text[:4090],
         "parse_mode": "HTML",
         "disable_web_page_preview": True,
     }).encode()
