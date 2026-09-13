@@ -62,6 +62,35 @@ def _escape_html(s):
     return str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 
 
+def _clean_title(title):
+    """Strip emojis, hashtags, channel handles and URLs from a raw title."""
+    t = re.sub(r"[\U0001F300-\U0001FAFF\u2600-\u27BF\u2190-\u21FF\u2B00-\u2BFF\uFE0F]", "", str(title))
+    t = re.sub(r"#[^\s#]+", "", t)
+    t = re.sub(r"@[\w_а-яа-я]+", "", t)
+    t = re.sub(r"https?://\S+", "", t)
+    t = re.sub(r"\s+", " ", t).strip()
+    t = t.strip(" |:.•■🔸–—-_*")
+    return t[:120] or str(title)[:120]
+
+
+def _source_label(platform, source):
+    """Persian label for where the item came from."""
+    if platform == "telegram":
+        return "تلگرام"
+    if platform == "eitaa":
+        return "ایتا"
+    if source == "google_news":
+        return "گوگل نیوز"
+    host = str(source)
+    if "irna.ir" in host:
+        return "ایرنا"
+    if "isna.ir" in host:
+        return "ایسنا"
+    if "mehrnews" in host:
+        return "مهر"
+    return "خبرگزاری"
+
+
 def _is_persian(text):
     """True if text contains at least one Persian letter."""
     return bool(re.search(r"[\u0600-\u06FF]", text))
@@ -357,34 +386,45 @@ def priority_counts(results):
 
 
 def build_telegram_report(rules, results, now):
-    max_items = rules["scoring"].get("max_items_per_report", 8)
+    max_items = rules["scoring"].get("max_items_per_report", 12)
     max_chars = 3900
-    budget_left = max_chars
     lines = [f"<b>Market Intelligence — {now.strftime('%Y-%m-%d %H:%M')}</b>"]
     if not results:
         lines.append("خبر مرتبط جدیدی یافت نشد.")
         return "\n".join(lines)
-    shown = 0
+
+    # group by primary category so the reader knows which category each block is
+    per_cat = {}
     for it in results:
-        tag = f"{it['priority_fa']} [{it['score']}/100]"
-        link = _escape_html(it["url"])
-        title = _escape_html(it["title"])
-        block = [
-            f"• {tag} | {it['type_fa']}",
-            f'  <a href="{link}">{title}</a>',
-        ]
-        if it.get("reasons"):
-            block.append(f"  <i>دلیل: {'؛ '.join(_escape_html(r) for r in it['reasons'][:2])}</i>")
-        block_chars = sum(len(l) + 1 for l in block) + 1
-        if budget_left - block_chars < 0:
+        per_cat.setdefault(it["category_id"], []).append(it)
+
+    budget_left = max_chars
+    order = sorted(per_cat, key=lambda c: -len(per_cat[c]))
+    shown = 0
+    for cid in order:
+        group = per_cat[cid]
+        header = f"<b>{_label_fa(rules, cid)}</b>"
+        if budget_left - (len(header) + 1) < 60:
             break
-        budget_left -= block_chars
-        lines.extend(block)
-        shown += 1
+        budget_left -= len(header) + 1
+        lines.append(header)
+        for it in group:
+            block = (
+                f"🔸 {_source_label(it.get('platform'), it.get('source', ''))} - "
+                f'<a href="{_escape_html(it.get("url", ""))}">{_escape_html(_clean_title(it.get("title", "")))}</a>'
+            )
+            if budget_left - (len(block) + 1) < 0:
+                break
+            budget_left -= len(block) + 1
+            lines.append(block)
+            shown += 1
+            if shown >= max_items:
+                break
         if shown >= max_items:
             break
+
     if shown < len(results):
-        lines.append(f"(+{len(results)-shown} خبر دیگر)")
+        lines.append(f"(+{len(results) - shown} خبر دیگر)")
     return "\n".join(lines)
 
 
@@ -409,9 +449,11 @@ def _prio_fa(rules, key):
 
 
 def _item_block(it, rules, num=None):
-    tag = f"{_prio_fa(rules, it.get('priority', 'low'))} [{it.get('score', 0)}/100]"
     prefix = f"{num}. " if num else "• "
-    return f'{prefix}{tag} | {it.get("type_fa", "")} — <a href="{_escape_html(it.get("url", ""))}">{_escape_html(it.get("title", ""))}</a>'
+    return (
+        f"{prefix}🔸 {_source_label(it.get('platform'), it.get('source', ''))} - "
+        f'<a href="{_escape_html(it.get("url", ""))}">{_escape_html(_clean_title(it.get("title", "")))}</a>'
+    )
 
 
 def load_period_items(cfg, days):
