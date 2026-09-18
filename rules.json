@@ -1,10 +1,10 @@
 {
   "categories": [
     {
-      "id": "rasmio",
-      "label": "Rasmio",
-      "label_fa": "خبر مستقیم رسمیو",
-      "type": "direct_rasmio",
+"id": "brand",
+      "label": "Direct Brand News",
+      "label_fa": "خبر مستقیم برند",
+      "type": "direct_brand",
       "weight": 0.15,
       "is_brand": true,
       "web_search": true,

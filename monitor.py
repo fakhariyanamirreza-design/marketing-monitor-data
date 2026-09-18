@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Marketing Intelligence monitor: scores news by relevance to Rasmio.
+"""Marketing Intelligence monitor: scores news by relevance to the brand.
 
 Reads config.json (sources/telegram/git) and rules.json (categories,
 weights, scoring params, priority thresholds). Every fetched item is
@@ -320,7 +320,7 @@ def score_item(item, rules):
         reason_hits = ", ".join(f"«{h[0]}»" + (" (عنوان)" if h[2] else "") for h in m["hits"][:3])
         reasons.append(f"[{m['label_fa']} {int(m['weight']*100)}%] {reason_hits}")
     if brand_matched:
-        reasons.append("ارتباط مستقیم با رسمیو → امتیاز اضافه")
+        reasons.append("ارتباط مستقیم با برند → امتیاز اضافه")
 
     return {
         "category": best["label"],
@@ -753,12 +753,19 @@ def _prio_summary(rules, counts):
     return "، ".join(f"{_prio_fa(rules, k)}: {counts.get(k, 0)}" for k in order if counts.get(k, 0))
 
 
+def _cat_terms(rules, cid):
+    for cat in rules["categories"]:
+        if cat["id"] == cid:
+            return [kw["text"] for kw in cat["keywords"]]
+    return []
+
+
 def build_daily_report(cfg, rules, now):
     items = load_period_items(cfg, 1)
     if not items:
-        return "<b>گزارش روزانه — رسمیو</b>\nدر ۲۴ ساعت گذشته خبری ثبت نشد."
+        return "<b>گزارش روزانه</b>\nدر ۲۴ ساعت گذشته خبری ثبت نشد."
 
-    lines = [f"<b>گزارش روزانه — رسمیو</b>", f"بازه: ۲۴ ساعت گذشته ({now.strftime('%Y-%m-%d')})"]
+    lines = ["<b>گزارش روزانه</b>", f"بازه: ۲۴ ساعت گذشته ({now.strftime('%Y-%m-%d')})"]
     pc = _counts(it.get("priority", "low") for it in items)
     lines.append(f"\n📊 مجموع: {len(items)} خبر | {_prio_summary(rules, pc)}")
 
@@ -771,9 +778,10 @@ def build_daily_report(cfg, rules, now):
     src_line = "، ".join(f"{src_label.get(k, k)}: {n}" for k, n in sorted(src_counts.items(), key=lambda kv: -kv[1]))
     lines.append(f"\n📡 به تفکیک منبع: {src_line}")
 
-    brand = [it for it in items if "رسمیو" in f"{it.get('title', '')} {it.get('snippet', '')}"]
+    brand_terms = _cat_terms(rules, "brand")
+    brand = [it for it in items if any(t in f"{it.get('title', '')} {it.get('snippet', '')}" for t in brand_terms)]
     if brand:
-        lines.append(f"\n🟠 منشن رسمیو: {len(brand)}")
+        lines.append(f"\n🟠 منشن برند: {len(brand)}")
 
     top = sorted(items, key=lambda x: x.get("score", 0), reverse=True)[:5]
     lines.append("\n🏆 ۵ خبر برتر:")
@@ -808,10 +816,10 @@ def _top_keywords(rules, items, limit):
 def build_weekly_report(cfg, rules, now):
     items = load_period_items(cfg, 7)
     if not items:
-        return "<b>گزارش هفتگی — رسمیو</b>\nدر ۷ روز گذشته خبری ثبت نشد."
+        return "<b>گزارش هفتگی</b>\nدر ۷ روز گذشته خبری ثبت نشد."
 
     start = (now - datetime.timedelta(days=6)).strftime("%Y-%m-%d")
-    lines = [f"<b>گزارش هفتگی — رسمیو</b>", f"بازه: {start} تا {now.strftime('%Y-%m-%d')}"]
+    lines = ["<b>گزارش هفتگی</b>", f"بازه: {start} تا {now.strftime('%Y-%m-%d')}"]
 
     pc = _counts(it.get("priority", "low") for it in items)
     lines.append(f"\n📊 مجموع: {len(items)} خبر | {_prio_summary(rules, pc)}")
@@ -822,10 +830,13 @@ def build_weekly_report(cfg, rules, now):
         pct = int(round(100.0 * n / len(items)))
         lines.append(f"  {_label_fa(rules, cid)}: {n} ({pct}٪)")
 
-    brand = [it for it in items if "رسمیو" in f"{it.get('title', '')} {it.get('snippet', '')}"]
-    comp = [it for it in items if "لینکا" in f"{it.get('title', '')} {it.get('snippet', '')}"]
-    lines.append(f"\n🟠 منشن رسمیو: {len(brand)}")
-    lines.append(f"👥 منشن رقیب (لینکا): {len(comp)}")
+    brand_terms = _cat_terms(rules, "brand")
+    comp_terms = _cat_terms(rules, "competitors")
+    joined = lambda it: f"{it.get('title', '')} {it.get('snippet', '')}"
+    brand = [it for it in items if any(t in joined(it) for t in brand_terms)]
+    comp = [it for it in items if any(t in joined(it) for t in comp_terms)]
+    lines.append(f"\n🟠 منشن برند: {len(brand)}")
+    lines.append(f"👥 منشن رقیب: {len(comp)}")
 
     complaints = [it for it in items if _has_complaint(it)]
     if complaints:
