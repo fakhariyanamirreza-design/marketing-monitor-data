@@ -43,6 +43,12 @@
         "https://www.searchenginejournal.com/feed/",
         "https://buffer.com/resources/feed",
         "https://www.socialmediaexaminer.com/feed/"
+      ],
+      "tg_channels": [
+        "DigitalMarketingandSales",
+        "digital_marketing_strategies",
+        "growthmarketingchannel",
+        "digitalmarketingnewsupdate"
       ]
     }
   },

@@ -64,12 +64,17 @@ def _escape_html(s):
 
 
 def _clean_title(title):
-    """Strip emojis, hashtags, channel handles, URLs and trailing 'via ...' from a raw title."""
-    t = re.sub(r"[\U0001F300-\U0001FAFF\u2600-\u27BF\u2190-\u21FF\u2B00-\u2BFF\uFE0F]", "", str(title))
+    """Strip emojis, hashtags, channel handles, URLs, trailing 'via ...' and Telegram footer noise."""
+    t = re.sub(r"[\U0001F300-\U0001FAFF\u2600-\u27BF\u2190-\u21FF\u2B00-\u2BFF\uFE0F\u20E3]", "", str(title))
     t = re.sub(r"#[^\s#]+", "", t)
     t = re.sub(r"@[\w_а-яа-я]+", "", t)
     t = re.sub(r"https?://\S+", "", t)
     t = re.sub(r"via\s*[,،]?\s*$", "", t, flags=re.I)
+    t = re.sub(r"\s*[Ll]ike\s*•\s*[Ss]hare(\s*•\s*[Ss]ubscribe)?.*$", "", t)
+    t = re.sub(r"(?i)\bPinned\s+Deleted\s+Message\b.*$", "", t)
+    t = re.sub(r"(?i)\d+(\.\d+)?[km]?\s*\d{2}:\d{2}\s*$", "", t)
+    t = re.sub(r"(?i)\d+\s*(media|with)\s*$", "", t)
+    t = re.sub(r"\s*[\u2026|:,]\s*$", "", t)
     t = re.sub(r"\s+", " ", t).strip()
     t = t.strip(" |:.•■🔸–—-_*")
     return t[:120] or str(title)[:120]
@@ -491,9 +496,9 @@ def _fresh(items, hours=48):
 
 
 def fetch_marketing_digest(cfg):
-    """Fetch fresh marketing/sales articles from Persian and English feeds."""
+    """Fetch fresh marketing/sales articles from Persian feeds, English feeds and Telegram channels."""
     src = cfg["sources"]["marketing_rss"]
-    fa, en = [], []
+    fa, en, tg = [], [], []
     if src.get("enabled", True):
         for url in src.get("fa_feeds", []):
             try:
@@ -506,40 +511,63 @@ def fetch_marketing_digest(cfg):
                 en.extend(_fresh(parse_rss_items(fetch(url), "marketing", url), 48))
             except Exception as e:
                 print(f"[marketing] fetch error {url}: {e}")
-    return fa, en
+        for ch in src.get("tg_channels", []):
+            try:
+                tg.extend(scan_telegram_channel(ch))
+            except Exception as e:
+                print(f"[marketing] telegram error {ch}: {e}")
+    return fa, en, tg
 
 
-def build_marketing_digest(cfg, rules, now, fa, en):
-    """Curated daily digest: short Persian section + foreign section, no noise."""
+def build_marketing_digest(cfg, rules, now, fa, en, tg):
+    """Curated daily digest: short Persian section + foreign section + Telegram channels, no noise."""
     max_fa = rules["scoring"].get("marketing_max_fa", 2)
     max_en = rules["scoring"].get("marketing_max_en", 6)
+    max_tg = rules["scoring"].get("marketing_max_tg", 3)
 
     fa = _dedup_results(fa)[:max_fa]
     en = _dedup_results(en)[:max_en]
 
+    tg_deduped = _dedup_results(tg)
+    per_ch = {}
+    for it in tg_deduped:
+        per_ch.setdefault(it.get("source", "telegram"), []).append(it)
+    tg = []
+    chs = list(per_ch)
+    idx = 0
+    while len(tg) < max_tg and chs:
+        ch = chs[idx % len(chs)]
+        if per_ch[ch]:
+            tg.append(per_ch[ch].pop(0))
+        else:
+            chs.pop(idx % len(chs))
+            idx = len(chs) if chs else 0
+            continue
+        idx += 1
+
     lines = [f"<b>🎯 دیجست بازاریابی و فروش — {now.strftime('%Y-%m-%d')}</b>"]
-    if not fa and not en:
+    if not fa and not en and not tg:
         lines.append("مطلب تازه‌ای در این حوزه امروز نبود.")
         return "\n".join(lines)
 
-    if fa:
+    def add_section(title, items):
+        if not items:
+            return
         lines.append("")
-        lines.append("<b>🇮🇷 منابع ایرانی</b>")
-        for it in fa:
+        lines.append(f"<b>{title}</b>")
+        for it in items:
+            ct = _clean_title(it.get("title", ""))
+            if not ct:
+                continue
             lines.append(
                 f"🔸 {_source_label(it.get('platform'), it.get('source', ''))} - "
-                f'<a href="{_escape_html(it.get("url", ""))}">{_escape_html(_clean_title(it.get("title", "")))}</a>'
+                f'<a href="{_escape_html(it.get("url", ""))}">{_escape_html(ct)}</a>'
             )
             lines.append("")
 
-    if en:
-        lines.append("<b>🌍 منابع خارجی</b>")
-        for it in en:
-            lines.append(
-                f"🔸 {_source_label(it.get('platform'), it.get('source', ''))} - "
-                f'<a href="{_escape_html(it.get("url", ""))}">{_escape_html(_clean_title(it.get("title", "")))}</a>'
-            )
-            lines.append("")
+    add_section("🇮🇷 منابع ایرانی", fa)
+    add_section("🌍 منابع خارجی", en)
+    add_section("📨 کانال‌های تلگرام", tg)
     return "\n".join(lines).rstrip()
 
 
@@ -563,8 +591,8 @@ def write_marketing_data(cfg, items, now):
 
 def run_marketing_cycle(cfg, rules, state, now):
     print("[marketing] fetching digest sources ...")
-    fa, en = fetch_marketing_digest(cfg)
-    items = fa + en
+    fa, en, tg = fetch_marketing_digest(cfg)
+    items = fa + en + tg
     seen = set(state["seen"])
     fresh = [it for it in items if it["id"] not in seen]
     if not fresh:
@@ -574,9 +602,9 @@ def run_marketing_cycle(cfg, rules, state, now):
     state["seen"] = state["seen"][-3000:]
     save_json(STATE, state)
     write_marketing_data(cfg, fresh, now)
-    text = build_marketing_digest(cfg, rules, now, fa, en)
+    text = build_marketing_digest(cfg, rules, now, fa, en, tg)
     send_telegram(cfg, text)
-    print(f"[done] marketing digest: {len(fresh)} new ({len(fa)} fa, {len(en)} en)")
+    print(f"[done] marketing digest: {len(fresh)} new ({len(fa)} fa, {len(en)} en, {len(tg)} tg)")
 
 
 def build_telegram_report(rules, results, now):
