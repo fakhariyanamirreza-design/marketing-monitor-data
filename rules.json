@@ -1709,7 +1709,10 @@
     "coverage_divisor": 0.3,
     "brand_bonus": 20,
     "brand_floor": 80,
-    "min_score": 40
+    "min_score": 40,
+    "marketing_max_fa": 2,
+    "marketing_max_en": 6,
+    "marketing_fresh_hours": 48
   },
   "priorities": {
     "critical": {

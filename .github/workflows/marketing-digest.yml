@@ -1,0 +1,44 @@
+name: marketing-digest
+
+on:
+  schedule:
+    # 15:15 UTC = 18:45 Tehran (Asia/Tehran, no DST)
+    # offset from the 3-hourly monitor run (15:00 UTC) to avoid push races
+    - cron: "15 15 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build & send marketing digest
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python monitor.py --marketing-digest
+
+      - name: Push results
+        if: always()
+        env:
+          GIT_USER: github-actions[bot]
+          GIT_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "$GIT_USER"
+          git config user.email "$GIT_EMAIL"
+          git add -A
+          git diff --cached --quiet && echo "no changes" && exit 0
+          git commit -m "marketing digest: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" HEAD:main

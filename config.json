@@ -30,6 +30,20 @@
         "https://www.tejaratnews.com/rss",
         "https://www.hamshahrionline.ir/rss"
       ]
+    },
+    "marketing_rss": {
+      "enabled": true,
+      "fa_feeds": [
+        "https://www.zoomit.ir/rss"
+      ],
+      "en_feeds": [
+        "https://blog.hubspot.com/feed",
+        "https://neilpatel.com/feed/",
+        "https://copyblogger.com/feed/",
+        "https://www.searchenginejournal.com/feed/",
+        "https://buffer.com/resources/feed",
+        "https://www.socialmediaexaminer.com/feed/"
+      ]
     }
   },
   "telegram": {

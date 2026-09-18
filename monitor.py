@@ -16,6 +16,7 @@ import argparse
 import re
 import html
 import hashlib
+import email.utils
 from pathlib import Path
 from urllib.request import urlopen, Request
 from urllib.parse import quote_plus
@@ -63,11 +64,12 @@ def _escape_html(s):
 
 
 def _clean_title(title):
-    """Strip emojis, hashtags, channel handles and URLs from a raw title."""
+    """Strip emojis, hashtags, channel handles, URLs and trailing 'via ...' from a raw title."""
     t = re.sub(r"[\U0001F300-\U0001FAFF\u2600-\u27BF\u2190-\u21FF\u2B00-\u2BFF\uFE0F]", "", str(title))
     t = re.sub(r"#[^\s#]+", "", t)
     t = re.sub(r"@[\w_а-яа-я]+", "", t)
     t = re.sub(r"https?://\S+", "", t)
+    t = re.sub(r"via\s*[,،]?\s*$", "", t, flags=re.I)
     t = re.sub(r"\s+", " ", t).strip()
     t = t.strip(" |:.•■🔸–—-_*")
     return t[:120] or str(title)[:120]
@@ -106,6 +108,22 @@ def _source_label(platform, source):
         return "تجارت‌نیوز"
     if "hamshahrionline" in host:
         return "همشهری"
+    if "zoomit" in host:
+        return "زومیت"
+    if "hubspot" in host:
+        return "HubSpot"
+    if "neilpatel" in host:
+        return "Neil Patel"
+    if "searchenginejournal" in host:
+        return "SEJ"
+    if "copyblogger" in host:
+        return "Copyblogger"
+    if "buffer.com" in host:
+        return "Buffer"
+    if "socialmediaexaminer" in host:
+        return "Social Media Examiner"
+    if platform == "marketing":
+        return re.sub(r"^www\.", "", host.split("//")[-1].split("/")[0])
     return "خبرگزاری"
 
 
@@ -431,6 +449,136 @@ def _dedup_results(results):
     return uniq
 
 
+# ------------------------ marketing / sales daily digest ------------------------
+
+MARKETING_FA_KW = [
+    "بازاریابی", "مارکتینگ", "کمپین", "برند", "تبلیغات", "نرخ تبدیل",
+    "سئو", "کانورژن", "اینفلوئنسر", "شبکه‌های اجتماعی", "کسب‌وکار آنلاین",
+    "فروشگاه آنلاین", "دیجیتال مارکتینگ", "بازاریابی دیجیتال",
+]
+MARKETING_EN_KW = [
+    "marketing", "brand", "advertising", "campaign", "seo", "conversion",
+    "influencer", "social media", "content marketing", "lead generation", "sales", "crm",
+]
+
+
+def _is_marketing_fa(title):
+    """True if a Persian feed item looks like a marketing/sales article."""
+    t = _clean_title(title)
+    if any(k in t for k in MARKETING_FA_KW):
+        return True
+    for k in MARKETING_EN_KW:
+        if re.search(r"(?<![A-Za-z0-9])" + re.escape(k) + r"(?![A-Za-z0-9])", t, re.I):
+            return True
+    return False
+
+
+def _fresh(items, hours=48):
+    """Keep items published within `hours`; items without a parseable date are kept."""
+    now = datetime.datetime.now(datetime.timezone.utc)
+    out = []
+    for it in items:
+        try:
+            ts = email.utils.parsedate_to_datetime(it.get("published") or "")
+            if ts.tzinfo is None:
+                ts = ts.replace(tzinfo=datetime.timezone.utc)
+            if (now - ts).total_seconds() > hours * 3600:
+                continue
+        except Exception:
+            pass
+        out.append(it)
+    return out
+
+
+def fetch_marketing_digest(cfg):
+    """Fetch fresh marketing/sales articles from Persian and English feeds."""
+    src = cfg["sources"]["marketing_rss"]
+    fa, en = [], []
+    if src.get("enabled", True):
+        for url in src.get("fa_feeds", []):
+            try:
+                items = _fresh(parse_rss_items(fetch(url), "marketing", url), 48)
+                fa.extend(it for it in items if _is_marketing_fa(it["title"]))
+            except Exception as e:
+                print(f"[marketing] fetch error {url}: {e}")
+        for url in src.get("en_feeds", []):
+            try:
+                en.extend(_fresh(parse_rss_items(fetch(url), "marketing", url), 48))
+            except Exception as e:
+                print(f"[marketing] fetch error {url}: {e}")
+    return fa, en
+
+
+def build_marketing_digest(cfg, rules, now, fa, en):
+    """Curated daily digest: short Persian section + foreign section, no noise."""
+    max_fa = rules["scoring"].get("marketing_max_fa", 2)
+    max_en = rules["scoring"].get("marketing_max_en", 6)
+
+    fa = _dedup_results(fa)[:max_fa]
+    en = _dedup_results(en)[:max_en]
+
+    lines = [f"<b>🎯 دیجست بازاریابی و فروش — {now.strftime('%Y-%m-%d')}</b>"]
+    if not fa and not en:
+        lines.append("مطلب تازه‌ای در این حوزه امروز نبود.")
+        return "\n".join(lines)
+
+    if fa:
+        lines.append("")
+        lines.append("<b>🇮🇷 منابع ایرانی</b>")
+        for it in fa:
+            lines.append(
+                f"🔸 {_source_label(it.get('platform'), it.get('source', ''))} - "
+                f'<a href="{_escape_html(it.get("url", ""))}">{_escape_html(_clean_title(it.get("title", "")))}</a>'
+            )
+            lines.append("")
+
+    if en:
+        lines.append("<b>🌍 منابع خارجی</b>")
+        for it in en:
+            lines.append(
+                f"🔸 {_source_label(it.get('platform'), it.get('source', ''))} - "
+                f'<a href="{_escape_html(it.get("url", ""))}">{_escape_html(_clean_title(it.get("title", "")))}</a>'
+            )
+            lines.append("")
+    return "\n".join(lines).rstrip()
+
+
+def write_marketing_data(cfg, items, now):
+    d = HERE / cfg["git"]["data_dir"]
+    d.mkdir(exist_ok=True)
+    jl_path = d / f"marketing-{now.strftime('%Y-%m')}.jsonl"
+    with open(jl_path, "a", encoding="utf-8") as f:
+        for it in items:
+            rec = {
+                "id": it["id"],
+                "ts": now.isoformat(timespec="seconds"),
+                "title": it["title"],
+                "url": it["url"],
+                "source": it["source"],
+                "platform": it["platform"],
+                "published": it["published"],
+            }
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+
+def run_marketing_cycle(cfg, rules, state, now):
+    print("[marketing] fetching digest sources ...")
+    fa, en = fetch_marketing_digest(cfg)
+    items = fa + en
+    seen = set(state["seen"])
+    fresh = [it for it in items if it["id"] not in seen]
+    if not fresh:
+        print("[marketing] nothing new")
+        return
+    state["seen"].extend(it["id"] for it in fresh)
+    state["seen"] = state["seen"][-3000:]
+    save_json(STATE, state)
+    write_marketing_data(cfg, fresh, now)
+    text = build_marketing_digest(cfg, rules, now, fa, en)
+    send_telegram(cfg, text)
+    print(f"[done] marketing digest: {len(fresh)} new ({len(fa)} fa, {len(en)} en)")
+
+
 def build_telegram_report(rules, results, now):
     """One message per run, deduped, filling the Telegram limit (~4040 chars) with the most news."""
     results = _dedup_results(results)
@@ -700,6 +848,7 @@ def main():
     ap.add_argument("--send-report", action="store_true", default=None, help="force send to Telegram (None=auto)")
     ap.add_argument("--daily-report", action="store_true", help="build & send daily summary (last 24h)")
     ap.add_argument("--weekly-report", action="store_true", help="build & send weekly analysis (last 7 days)")
+    ap.add_argument("--marketing-digest", action="store_true", help="build & send daily marketing/sales digest")
     args = ap.parse_args()
 
     cfg = load_json(CONFIG)
@@ -714,6 +863,9 @@ def main():
         return
     if args.weekly_report:
         dispatch_report(cfg, build_weekly_report(cfg, rules, datetime.datetime.now()))
+        return
+    if args.marketing_digest:
+        run_marketing_cycle(cfg, rules, state, datetime.datetime.now())
         return
 
     if args.once:

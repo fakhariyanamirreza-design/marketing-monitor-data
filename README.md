@@ -12,6 +12,9 @@
 
 - اجرا با **GitHub Actions** هر ۳ ساعت (بدون نیاز به سرور/کارت اعتباری) + امکان اجرای دستی (`workflow_dispatch`).
 - **گزارش‌های روزانه و هفتگی** به صورت جداگانه زمان‌بندی شده‌اند (هر روز ۰۸:۰۰ و هفته‌ای یک‌بار پنجشنبه ۰۸:۰۰ به وقت تهران).
+- **دیجست روزانه بازاریابی و فروش** (`--marketing-digest`) هر روز ~۱۸:۴۵ تهران: مقالات/پست‌های تازه (۴۸ ساعت اخیر)
+  حوزه بازاریابی و فروش را از **منابع ایرانی و خارجی** جمع می‌کند، انتخابِ مرتبط را ‌ددوپ و کوتاه می‌فرستد
+  (حداکثر ~۲ مورد ایرانی، ~۶ خارجی — برای مطالعه عمقی، نه سیل خبر).
 - منابع (همه بدون لاگین و بدون API):
   - **Google News RSS** (`lang=en, geo=IR` با کوئری‌های دوزبانه فارسی/انگلیسی برای پوشش خبر ایران)
   - **صفحات عمومی تلگرام** (`t.me/s/...`) — کانال‌های اقتصادی فارسی
@@ -34,6 +37,8 @@
 - داده کامل Markdown + JSONL در `data/` ذخیره و push می‌شود (امتیاز/دسته/دلیل در فایل‌ها باقی می‌ماند).
 - **گزارش روزانه** (`--daily-report`): خلاصه ۲۴ ساعت گذشته — مجموع/اولویت، تفکیک دسته و منبع، منشن رسمیو، ۵ خبر برتر.
 - **گزارش هفتگی** (`--weekly-report`): تحلیل ۷ روز — سهم صدا (Share of Voice) هر دسته، منشن رسمیو/رقیب لینکا، هشدارهای شکایت مشتریان، موضوعات داغ هفته (فقط کلیدواژه‌های فارسی).
+- **دیجست بازاریابی** (`--marketing-digest`): یک پیام با دو بخش `🇮🇷 ایرانی` و `🌍 خارجی`؛ هر مقاله یک خط
+  `🔸 {سورس} - {تایتل لینک‌شده}`. سورس خارجی = نام وبلاگ (HubSpot، Neil Patel، Copyblogger، SEJ، Buffer، Social Media Examiner) و ایرانی = زومیت (فقط تیترهای مرتبط با بازاریابی/فروش با مرزکلمه). داده در `data/marketing-*.jsonl`.
 - **dedup پایدار**: `data/seen.json` (tracked در git) آیدی آخرین ۳۰۰۰ خبر دیده‌شده را نگه می‌دارد تا
   بین رن‌های Actions تکراری ارسال نشود.
 
@@ -45,11 +50,12 @@
 | فایل | توضیح |
 |---|---|
 | `monitor.py` | موتور: جمع‌آوری منابع، امتیازدهی، گزارش تلگرام، ذخیره‌سازی |
-| `config.json` | منابع (تلگرام/گوگل‌نیوز/RSS خبرگزاری) و تنظیمات تلگرام و git |
-| `rules.json` | **کاملاً قابل تنظیم**: دسته‌ها، وزن‌ها، کلیدواژه‌ها، `cap`، ضرایب |
+| `config.json` | منابع (تلگرام/گوگل‌نیوز/RSS خبرگزاری/**بازاریابی**) و تنظیمات تلگرام و git |
+| `rules.json` | **کاملاً قابل تنظیم**: دسته‌ها، وزن‌ها، کلیدواژه‌ها، `cap`، ضرایب، سقف دیجست بازاریابی |
 | `.github/workflows/monitor.yml` | زمان‌بندی هر ۳ ساعت + push |
 | `.github/workflows/daily-report.yml` | گزارش روزانه هر روز ۰۸:۰۰ تهران |
 | `.github/workflows/weekly-report.yml` | گزارش هفتگی پنجشنبه‌ها ۰۸:۰۰ تهران |
+| `.github/workflows/marketing-digest.yml` | دیجست بازاریابی و فروش هر روز ~۱۸:۴۵ تهران |
 | `data/` | خروجی‌ها (Markdown روزانه، JSONL کامل، `seen.json` برای dedup) |
 | `tools/find_chat_id.py` | یافتن شناسه گروه تلگرام |
 
@@ -81,8 +87,22 @@
       "https://www.khabaronline.ir/rss",                  // خبرآنلاین
       "https://www.entekhab.ir/fa/rss/allnews",           // انتخاب
       "https://www.tasnimnews.ir/fa/rss/feeds/7/0/0/0",   // تسنیم (اقتصادی)
-      "https://www.donya-e-eqtesad.com/rss"               // دنیای اقتصاد
-    ]
+      "https://www.donya-e-eqtesad.com/rss",              // دنیای اقتصاد
+      "https://www.pana.ir/rss",                          // پانا
+      "https://www.tejaratnews.com/rss",                  // تجارت‌نیوز
+      "https://www.hamshahrionline.ir/rss"                // همشهری
+    ],
+    "marketing_rss": {
+      "fa_feeds": ["https://www.zoomit.ir/rss"],
+      "en_feeds": [
+        "https://blog.hubspot.com/feed",
+        "https://neilpatel.com/feed/",
+        "https://copyblogger.com/feed/",
+        "https://www.searchenginejournal.com/feed/",
+        "https://buffer.com/resources/feed",
+        "https://www.socialmediaexaminer.com/feed/"
+      ]
+    }
   }
 }
 ```
@@ -103,6 +123,8 @@
 | divisor/title/bonus | `scoring.*` | ضرایب فرمول Relevance |
 | آستانه‌ها | `priorities.*` | مرزهای Priority |
 | حداقل امتیاز | `scoring.min_score` | فیلتر نویز |
+| سقف دیجست بازاریابی | `scoring.marketing_max_fa` / `marketing_max_en` | حداکثر مقاله ایرانی/خارجی در دیجست روزانه |
+| پنجره تازگی | `scoring.marketing_fresh_hours` | مقالاتی این‌قدر ساعت اخیر نگه داشته می‌شوند (۴۸) |
 
 ## Secrets (تنظیمات GitHub → Actions secrets)
 
