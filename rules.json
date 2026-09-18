@@ -1710,10 +1710,12 @@
     "brand_bonus": 20,
     "brand_floor": 80,
     "min_score": 40,
-    "marketing_max_fa": 2,
+    "marketing_max_fa": 3,
     "marketing_max_en": 5,
     "marketing_max_tg": 3,
-    "marketing_fresh_hours": 48
+    "marketing_max_tg_fa": 2,
+    "marketing_fresh_hours": 48,
+    "marketing_tg_hours": 168
   },
   "priorities": {
     "critical": {

@@ -517,12 +517,16 @@ def _fresh(items, hours=48):
     return out
 
 
-def fetch_marketing_digest(cfg, rules, hours=None):
-    """Fetch fresh marketing/sales articles from Persian feeds, English feeds and Telegram channels."""
+def fetch_marketing_digest(cfg, rules, hours=None, hours_tg=None):
+    """Fetch fresh marketing/sales content: Persian RSS, English RSS, foreign & Persian Telegram channels."""
     src = cfg["sources"]["marketing_rss"]
     if hours is None:
-        hours = rules["scoring"].get("marketing_fresh_hours", 48)
-    fa, en, tg = [], [], []
+        sc = rules["scoring"]
+        hours = sc.get("marketing_fresh_hours", 48)
+        hours_tg = sc.get("marketing_tg_hours", 168)
+    elif hours_tg is None:
+        hours_tg = hours
+    fa, en, tg, tg_fa = [], [], [], []
     if src.get("enabled", True):
         for url in src.get("fa_feeds", []):
             try:
@@ -537,44 +541,51 @@ def fetch_marketing_digest(cfg, rules, hours=None):
                 print(f"[marketing] fetch error {url}: {e}")
         for ch in src.get("tg_channels", []):
             try:
-                tg.extend(_fresh(scan_telegram_channel(ch), hours))
+                tg.extend(_fresh(scan_telegram_channel(ch), hours_tg))
             except Exception as e:
                 print(f"[marketing] telegram error {ch}: {e}")
-    return fa, en, tg
+        for ch in src.get("tg_fa_channels", []):
+            try:
+                tg_fa.extend(_fresh(scan_telegram_channel(ch), hours_tg))
+            except Exception as e:
+                print(f"[marketing] telegram error {ch}: {e}")
+    return fa, en, tg, tg_fa
 
 
-def build_marketing_digest(cfg, rules, now, fa, en, tg):
-    """Curated daily digest: short Persian section + foreign section + Telegram channels, no noise."""
-    max_fa = rules["scoring"].get("marketing_max_fa", 2)
-    max_en = rules["scoring"].get("marketing_max_en", 6)
-    max_tg = rules["scoring"].get("marketing_max_tg", 3)
+def _rotate_channels(items, max_n):
+    """Pick up to max_n items spread across channels (round-robin) so one chatty channel can't take all slots."""
+    per_ch = {}
+    for it in items:
+        per_ch.setdefault(it.get("source", "telegram"), []).append(it)
+    picked = []
+    chs = list(per_ch)
+    while len(picked) < max_n and chs:
+        ch = chs.pop(0)
+        if per_ch[ch]:
+            picked.append(per_ch[ch].pop(0))
+        chs.append(ch)
+    return picked
+
+
+def build_marketing_digest(cfg, rules, now, fa, en, tg, tg_fa):
+    """Curated daily digest: Persian, English, foreign Telegram and Persian Telegram — no noise."""
+    sc = rules["scoring"]
+    max_fa = sc.get("marketing_max_fa", 3)
+    max_en = sc.get("marketing_max_en", 5)
+    max_tg = sc.get("marketing_max_tg", 3)
+    max_tg_fa = sc.get("marketing_max_tg_fa", 2)
 
     fa = _dedup_results(fa)[:max_fa]
     en = _dedup_results(en)[:max_en]
-
-    tg_deduped = _dedup_results(tg)
-    per_ch = {}
-    for it in tg_deduped:
-        per_ch.setdefault(it.get("source", "telegram"), []).append(it)
-    tg = []
-    chs = list(per_ch)
-    idx = 0
-    while len(tg) < max_tg and chs:
-        ch = chs[idx % len(chs)]
-        if per_ch[ch]:
-            tg.append(per_ch[ch].pop(0))
-        else:
-            chs.pop(idx % len(chs))
-            idx = len(chs) if chs else 0
-            continue
-        idx += 1
+    tg = _rotate_channels(_dedup_results(tg), max_tg)
+    tg_fa = _rotate_channels(_dedup_results(tg_fa), max_tg_fa)
 
     lines = [f"<b>🎯 دیجست بازاریابی و فروش — {now.strftime('%Y-%m-%d')}</b>"]
-    if not fa and not en and not tg:
+    if not any([fa, en, tg, tg_fa]):
         lines.append("مطلب تازه‌ای در این حوزه امروز نبود.")
         return "\n".join(lines)
 
-    def add_section(title, items):
+    def add_section(title, items, as_channel=False):
         if not items:
             return
         lines.append("")
@@ -583,15 +594,17 @@ def build_marketing_digest(cfg, rules, now, fa, en, tg):
             ct = _clean_title(it.get("title", ""))
             if not ct:
                 continue
+            label = ("@" + it.get("source", "telegram")) if as_channel else _source_label(it.get("platform"), it.get("source", ""))
             lines.append(
-                f"🔸 {_source_label(it.get('platform'), it.get('source', ''))} - "
+                f"🔸 {label} - "
                 f'<a href="{_escape_html(it.get("url", ""))}">{_escape_html(ct)}</a>'
             )
             lines.append("")
 
     add_section("🇮🇷 منابع ایرانی", fa)
     add_section("🌍 منابع خارجی", en)
-    add_section("📨 کانال‌های تلگرام", tg)
+    add_section("📨 کانال‌های تلگرام ایرانی", tg_fa, as_channel=True)
+    add_section("📨 کانال‌های تلگرام خارجی", tg, as_channel=True)
     return "\n".join(lines).rstrip()
 
 
@@ -615,10 +628,15 @@ def write_marketing_data(cfg, items, now):
 
 def run_marketing_cycle(cfg, rules, state, now):
     print("[marketing] fetching digest sources ...")
-    fa, en, tg = fetch_marketing_digest(cfg, rules)
-    items = fa + en + tg
+    fa, en, tg, tg_fa = fetch_marketing_digest(cfg, rules)
     seen = set(state["seen"])
-    fresh = [it for it in items if it["id"] not in seen]
+    fa, en, tg, tg_fa = (
+        [it for it in fa if it["id"] not in seen],
+        [it for it in en if it["id"] not in seen],
+        [it for it in tg if it["id"] not in seen],
+        [it for it in tg_fa if it["id"] not in seen],
+    )
+    fresh = fa + en + tg + tg_fa
     if not fresh:
         print("[marketing] nothing new")
         return
@@ -626,9 +644,9 @@ def run_marketing_cycle(cfg, rules, state, now):
     state["seen"] = state["seen"][-3000:]
     save_json(STATE, state)
     write_marketing_data(cfg, fresh, now)
-    text = build_marketing_digest(cfg, rules, now, fa, en, tg)
+    text = build_marketing_digest(cfg, rules, now, fa, en, tg, tg_fa)
     send_telegram(cfg, text)
-    print(f"[done] marketing digest: {len(fresh)} new ({len(fa)} fa, {len(en)} en, {len(tg)} tg)")
+    print(f"[done] marketing digest: {len(fresh)} new ({len(fa)} fa, {len(en)} en, {len(tg)} tg, {len(tg_fa)} tg_fa)")
 
 
 def build_telegram_report(rules, results, now):
