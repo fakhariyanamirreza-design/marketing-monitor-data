@@ -210,7 +210,11 @@ def scan_iranian_rss(feed):
 def scan_telegram_channel(username):
     """Scan a public Telegram channel page (t.me/s/...)."""
     url = f"https://t.me/s/{username}"
-    regex = r'data-post="([^"]+)".*?<div class="tgme_widget_message_text[^"]*"[^>]*>(.*?)</div>'
+    regex = (
+        r'data-post="([^"]+)".*?'
+        r'<div class="tgme_widget_message_text[^"]*"[^>]*>(.*?)</div>.*?'
+        r'<time[^>]*datetime="([^"]*)"'
+    )
     try:
         raw = fetch(url)
     except Exception as e:
@@ -218,7 +222,7 @@ def scan_telegram_channel(username):
         return []
     items = []
     for m in re.finditer(regex, raw, re.S):
-        post_id, body = m.group(1), m.group(2)
+        post_id, body, dt = m.group(1), m.group(2), m.group(3)
         text = html.unescape(re.sub(r"<br\s*/?>", " ", re.sub(r"<[^>]+>", "", body))).strip()
         if not text:
             continue
@@ -230,7 +234,7 @@ def scan_telegram_channel(username):
             "title": text[:160],
             "url": link,
             "snippet": text[:600],
-            "published": post_id,
+            "published": dt or f"{username}/{post_id}",
         })
     return items
 
@@ -478,42 +482,62 @@ def _is_marketing_fa(title):
     return False
 
 
+def _parse_date(s):
+    """Parse an RSS/Telegram date string into an aware datetime (or None)."""
+    if not s:
+        return None
+    candidates = [
+        lambda: email.utils.parsedate_to_datetime(s),
+        lambda: datetime.datetime.fromisoformat(s.replace("Z", "+00:00")),
+    ]
+    for make in candidates:
+        try:
+            ts = make()
+        except Exception:
+            continue
+        if ts is None:
+            continue
+        if ts.tzinfo is None:
+            ts = ts.replace(tzinfo=datetime.timezone.utc)
+        return ts
+    return None
+
+
 def _fresh(items, hours=48):
-    """Keep items published within `hours`; items without a parseable date are kept."""
+    """Keep only items published within `hours`; items without a parseable or fresh-enough date are dropped."""
     now = datetime.datetime.now(datetime.timezone.utc)
     out = []
     for it in items:
-        try:
-            ts = email.utils.parsedate_to_datetime(it.get("published") or "")
-            if ts.tzinfo is None:
-                ts = ts.replace(tzinfo=datetime.timezone.utc)
-            if (now - ts).total_seconds() > hours * 3600:
-                continue
-        except Exception:
-            pass
+        ts = _parse_date(it.get("published") or "")
+        if ts is None:
+            continue
+        if (now - ts).total_seconds() > hours * 3600:
+            continue
         out.append(it)
     return out
 
 
-def fetch_marketing_digest(cfg):
+def fetch_marketing_digest(cfg, rules, hours=None):
     """Fetch fresh marketing/sales articles from Persian feeds, English feeds and Telegram channels."""
     src = cfg["sources"]["marketing_rss"]
+    if hours is None:
+        hours = rules["scoring"].get("marketing_fresh_hours", 48)
     fa, en, tg = [], [], []
     if src.get("enabled", True):
         for url in src.get("fa_feeds", []):
             try:
-                items = _fresh(parse_rss_items(fetch(url), "marketing", url), 48)
+                items = _fresh(parse_rss_items(fetch(url), "marketing", url), hours)
                 fa.extend(it for it in items if _is_marketing_fa(it["title"]))
             except Exception as e:
                 print(f"[marketing] fetch error {url}: {e}")
         for url in src.get("en_feeds", []):
             try:
-                en.extend(_fresh(parse_rss_items(fetch(url), "marketing", url), 48))
+                en.extend(_fresh(parse_rss_items(fetch(url), "marketing", url), hours))
             except Exception as e:
                 print(f"[marketing] fetch error {url}: {e}")
         for ch in src.get("tg_channels", []):
             try:
-                tg.extend(scan_telegram_channel(ch))
+                tg.extend(_fresh(scan_telegram_channel(ch), hours))
             except Exception as e:
                 print(f"[marketing] telegram error {ch}: {e}")
     return fa, en, tg
@@ -591,7 +615,7 @@ def write_marketing_data(cfg, items, now):
 
 def run_marketing_cycle(cfg, rules, state, now):
     print("[marketing] fetching digest sources ...")
-    fa, en, tg = fetch_marketing_digest(cfg)
+    fa, en, tg = fetch_marketing_digest(cfg, rules)
     items = fa + en + tg
     seen = set(state["seen"])
     fresh = [it for it in items if it["id"] not in seen]
