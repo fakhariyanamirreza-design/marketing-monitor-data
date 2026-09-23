@@ -1689,14 +1689,6 @@
           "weight": 0.8
         },
         {
-          "text": "دولت",
-          "weight": 0.6
-        },
-        {
-          "text": "مجلس",
-          "weight": 0.6
-        },
-        {
           "text": "قانون",
           "weight": 0.7
         }
@@ -1715,7 +1707,8 @@
     "marketing_max_tg": 3,
     "marketing_max_tg_fa": 2,
     "marketing_fresh_hours": 48,
-    "marketing_tg_hours": 168
+    "marketing_tg_hours": 168,
+    "report_max_per_cat": 10
   },
   "priorities": {
     "critical": {

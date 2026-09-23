@@ -254,6 +254,15 @@ def match_keywords(text, category):
     return hits
 
 
+_WORD = "A-Za-z\u0600-\u06FF"
+_has_complaint_guard = "(?<!" + _WORD + ")"
+
+
+def _kw_match(text, kw):
+    """Whole-word match for Persian/English keywords (no substring false positives like نفت~نفتکش)."""
+    return re.search("(?<![" + _WORD + "])" + re.escape(kw) + "(?![" + _WORD + "])", text)
+
+
 def score_item(item, rules):
     """Classify an item into categories and compute relevance score."""
     sc = rules["scoring"]
@@ -266,8 +275,10 @@ def score_item(item, rules):
         strength = 0.0
         for kw in cat["keywords"]:
             kwt = kw["text"].lower()
-            in_title = kwt in title
-            in_body = kwt in text
+            is_title = _kw_match(title, kwt)
+            is_body = _kw_match(text, kwt)
+            in_title = bool(is_title)
+            in_body = not in_title and bool(is_body)
             if not (in_title or in_body):
                 continue
             mult = sc.get("title_multiplier", 2.0) if in_title else 1.0
@@ -664,7 +675,9 @@ def build_telegram_report(rules, results, now):
         per_cat.setdefault(it["category_id"], []).append(it)
 
     budget_left = max_chars - len(lines[0]) - 1
-    order = sorted(per_cat, key=lambda c: -len(per_cat[c]))
+    cat_rank = {cid: i for i, c in enumerate(rules["categories"]) for cid in [c["id"]]}
+    order = sorted(per_cat, key=lambda c: (cat_rank.get(c, 99), -len(per_cat[c])))
+    max_per_cat = rules["scoring"].get("report_max_per_cat", 10)
     shown = 0
     for cid in order:
         group = per_cat[cid]
@@ -673,7 +686,10 @@ def build_telegram_report(rules, results, now):
             break
         budget_left -= len(header) + 1
         lines.append(header)
+        cat_shown = 0
         for it in group:
+            if cat_shown >= max_per_cat:
+                break
             block = (
                 f"🔸 {_source_label(it.get('platform'), it.get('source', ''))} - "
                 f'<a href="{_escape_html(it.get("url", ""))}">{_escape_html(_clean_title(it.get("title", "")))}</a>'
@@ -684,6 +700,15 @@ def build_telegram_report(rules, results, now):
             lines.append(block)
             lines.append("")  # blank line between news items
             shown += 1
+            cat_shown += 1
+        hidden = len(group) - cat_shown
+        if hidden > 0:
+            note = f"… و {hidden} خبر دیگر در {_label_fa(rules, cid)}"
+            if budget_left - (len(note) + 1) < 0:
+                break
+            budget_left -= len(note) + 1
+            lines.append(note)
+            lines.append("")
 
     if shown < len(results):
         lines.append(f"(+{len(results) - shown} خبر دیگر)")
